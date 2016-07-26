@@ -11,7 +11,7 @@
   },
 
   "log" : {                         // Configure the local log module.
-    "consoleLogLevel": "trace",     // Configure the bunyan log level: https://github.com/trentm/node-bunyan#levels
+    "consoleLogLevel": "warn",      // Configure the bunyan log level: https://github.com/trentm/node-bunyan#levels
     "requests": true                // Enable trace logging of all requests the server receives.
   },
 
@@ -19,5 +19,10 @@
     "domainName": "localhost",      // Domain name used to reach the server.  (e.g. my.website.com)
     "port": 3000,                   // Port the server will be listening on.
     "protocol": "http"              // Protocol used to reach the server. (e.g. http or https)
+  },
+
+  "test": {                         // Special configurations used for testing the server.
+    "canSetAppIdsInCreateAppIds": true,  // When true, the request can include specific application IDs to count as generated.
+    "canSetRetriesInCreateAppIds": true  // When true, the request can include how many retry attempts to use when generating application IDs.
   }
 }

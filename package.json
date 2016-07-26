@@ -34,7 +34,7 @@
     "start:staging": "NODE_ENV=staging node index.js",
     "start:production": "NODE_ENV=production node index",
     "test": "NODE_ENV=test mocha",
-    "test-travis": "NODE_ENV=test-travis istanbul cover -x '**_test.js' -x '**/test.js' ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec"
+    "test-travis": "NODE_ENV=test-travis istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec"
   },
   "dependencies": {
     "async": "^2.0.0-rc.6",

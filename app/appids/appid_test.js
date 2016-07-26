@@ -121,6 +121,7 @@ module.exports = function(server) {
   describe("AppIds", function() {
 
     afterEach(function (done) {
+      this.timeout(0);
       cql.truncateModels(done);
     });
 
@@ -128,7 +129,6 @@ module.exports = function(server) {
     /* ************************************************** *
      * ******************** Register
      * ************************************************** */
-
 
     describe("can be registered", function () {
 

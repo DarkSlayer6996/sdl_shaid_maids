@@ -8,6 +8,8 @@ module.exports = function(server) {
     RichError = server.RichError,
     _ = require('lodash');
 
+  const CAN_SET_APP_IDS_IN_CREATE_APP_IDS = (config.has('test.canSetAppIdsInCreateAppIds') && config.get('test.canSetAppIdsInCreateAppIds') === true) ? true : false,
+    CAN_SET_RETRIES_IN_CREATE_APP_IDS = (config.has('test.canSetRetriesInCreateAppIds') && config.get('test.canSetRetriesInCreateAppIds') === true) ? true : false;
 
   /* ************************************************** *
    * ******************** API Routes and Permissions
@@ -72,8 +74,12 @@ module.exports = function(server) {
     } else {
       let appIds = [],
         retries;
-      if(process.env.NODE_ENV === 'test' && req.body.ids !== undefined) {
+
+      if(CAN_SET_RETRIES_IN_CREATE_APP_IDS) {
         retries = req.body.retries;
+      }
+
+      if(CAN_SET_APP_IDS_IN_CREATE_APP_IDS && req.body.ids !== undefined) {
         for (let i = 0; i < numOfIds; i++) {
           let columns = {
             createdBy: createdBy,

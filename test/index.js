@@ -1,5 +1,5 @@
 // Set the node environment mode to testing.
-process.env.NODE_ENV = 'test';
+//process.env.NODE_ENV = 'test';
 
 let assert = require('assert'),
   config = require('config'),
