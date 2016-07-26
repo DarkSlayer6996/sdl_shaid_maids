@@ -145,6 +145,7 @@ class Server {
   initCassandra(cb) {
     let self = this;
     if(config.has('cassandra')) {
+      self.log.trace('Initializing cassandra.');
       self.cql = new Cql(self);
       self.cql.init(function(err, cassandraClient) {
         self.cassandraClient = cassandraClient;
@@ -163,6 +164,8 @@ class Server {
    * passed into the classes constructor.
    */
   initConfig(options) {
+    let self = this;
+
     if( ! config.has('log.name')) {
       config.log.name = config.server.name;
     }
@@ -177,13 +180,16 @@ class Server {
 
     // Make the configuration object immutable.
     config.get('server');
-    this.config = config;
+    self.config = config;
   }
 
   initDynamoDB(cb) {
+    let self = this;
+
     if(config.has('dynamoDb')) {
+      self.log.trace('Initializing Dynamo DB.');
       let AWS = require('aws-sdk');
-      this.dynamoDb = new AWS.DynamoDB(config.get('dynamoDb.aws'));
+      self.dynamoDb = new AWS.DynamoDB(config.get('dynamoDb.aws'));
     }
     cb();
   }
@@ -335,6 +341,7 @@ class Server {
   initMongoose(cb) {
     if(config.has('mongoose')) {
       let self = this;
+      self.log.trace('Initializing Mongoose.');
 
       let mongoose = require('mongoose');
 
@@ -356,7 +363,9 @@ class Server {
   }
 
   initSessionStore(cb) {
+    let self = this;
     if(config.has('session')) {
+      self.log.trace('Initializing session store.');
 
       // Set-up express sessions
       let sessionConfig = {

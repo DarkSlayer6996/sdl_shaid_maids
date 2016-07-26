@@ -185,7 +185,7 @@ module.exports = function(server) {
       let columns = [
         "id text",
         "createdBy text",
-        "createdOn date",
+        "createdOn timestamp",
         "isGenerated boolean",
         "PRIMARY KEY (id)"
       ];
