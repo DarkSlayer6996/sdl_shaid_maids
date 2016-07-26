@@ -1,0 +1,63 @@
+{
+  "name": "maids",
+  "version": "0.0.1",
+  "author": "Livio",
+  "bugs": {
+    "url": "https://github.com/smartdevicelink/maids.git"
+  },
+  "contributors": [
+    {
+      "name": "Corey Maylone",
+      "email": "corey@livio.io"
+    },
+    {
+      "name": "Scott Smereka",
+      "email": "scott@livio.io"
+    }
+  ],
+  "description": "Micro service for generating SDL application IDs.",
+  "homepage": "smartdevicelink.com",
+  "keywords": [
+    "MAIDS",
+    "SHAID",
+    "SmartDeviceLink",
+    "SDL"
+  ],
+  "license": "BSD-3-Clause",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smartdevicelink/maids.git"
+  },
+  "scripts": {
+    "start": "NODE_ENV=development node index.js",
+    "start:staging": "NODE_ENV=staging node index.js",
+    "start:production": "NODE_ENV=production node index",
+    "test": "mocha"
+  },
+  "dependencies": {
+    "async": "^2.0.0-rc.6",
+    "body-parser": "^1.15.2",
+    "bunyan": "^1.8.1",
+    "bunyan-dynamo": "0.0.5",
+    "bunyan-pretty-stream": "^1.0.1",
+    "cassandra-driver": "^3.1.1",
+    "compression": "^1.6.2",
+    "config": "^1.21.0",
+    "cors": "^2.7.1",
+    "cramit": "0.0.3",
+    "express": "^4.13.3",
+    "express-session": "^1.13.0",
+    "express-useragent": "^0.2.4",
+    "i18next": "^3.3.1",
+    "i18next-express-middleware": "^1.0.1",
+    "i18next-node-fs-backend": "^0.1.2",
+    "i18next-sprintf-postprocessor": "^0.2.2",
+    "lodash": "^4.13.1"
+  },
+  "devDependencies": {
+    "mocha": "^2.5.3",
+    "should": "^10.0.0",
+    "supertest": "^1.2.0"
+  }
+}
