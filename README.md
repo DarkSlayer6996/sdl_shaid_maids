@@ -14,7 +14,7 @@ The documentation is written in [DocDown](https://github.com/smartdevicelink/sdl
 ## Basic Install and Run
 
 1. ```git clone https://github.com/smartdevicelink/maids.git```
-2. ```cd maids```
+2. ```cd sdl_maids```
 3. ```npm install```
 4. ```npm start```
 5. navigate to http://localhost:3000 in your browser of choice.
