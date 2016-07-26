@@ -11,7 +11,7 @@
   },
 
   "log" : {                         // Configure the local log module.
-    "consoleLogLevel": "warn",      // Configure the bunyan log level: https://github.com/trentm/node-bunyan#levels
+    "consoleLogLevel": "trace",     // Configure the bunyan log level: https://github.com/trentm/node-bunyan#levels
     "requests": true                // Enable trace logging of all requests the server receives.
   },
 
