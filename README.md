@@ -1,6 +1,11 @@
 # Maids
 Creates new and registers existing unique application IDs. Each ID stored in MAIDs is guaranteed to be unique across the entire SmartDeviceLink (SDL) ecosystem. 
 
+## Status
+<a href="https://travis-ci.org/smartdevicelink/sdl_maids" target="_blank"><img src="https://travis-ci.org/smartdevicelink/sdl_maids.svg"></a>
+<a href="https://codecov.io/github/smartdevicelink/sdl_maids?branch=master" target="_blank"><img src="https://codecov.io/github/smartdevicelink/sdl_maids/coverage.svg?branch=master" /></a>
+[![Dependency Status](https://david-dm.org/smartdevicelink/sdl_maids.svg)](https://david-dm.org/smartdevicelink/sdl_maids)
+
 ## Documentation
 See [SmartDeviceLink.com](https://smartdevicelink.com/en/docs/shaid/master/overview/).  
 
