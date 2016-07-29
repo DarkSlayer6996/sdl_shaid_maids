@@ -86,7 +86,8 @@ class Server {
     tasks.push(createClassAsyncMethod(self, "initMongoose"));
     tasks.push(createClassAsyncMethod(self, "initCassandra"));
     tasks.push(createClassAsyncMethod(self, "initExpress"));
-    tasks.push(createClassAsyncMethod(self, "initApplication"));
+    //tasks.push(createClassAsyncMethod(self, "initApplication"));
+    tasks.push(createClassAsyncMethod(self, "loadSenecaApp"));
     //tasks.push(createClassAsyncMethod(self, "loadStaticData"));
     tasks.push(createClassAsyncMethod(self, "setResponseHandlers"));
     tasks.push(createClassAsyncMethod(self, "startExpressServer"));
@@ -129,6 +130,11 @@ class Server {
         cb(err);
       } else {
         self.models = models;
+
+        //Initialize seneca.
+        if(config.has('seneca')) {
+          self.seneca = require('seneca');
+        }
 
         let crave = require('crave');
         crave.setConfig(config.get('crave'));
@@ -421,7 +427,32 @@ class Server {
       cb();
     }
   }
+  
+  // Load the application models and endpoints.
+  loadSenecaApp (cb) {
+    let self = this;
+    self.log.trace('Load seneca application models and endpoints.');
 
+    self.cql.loadModels(function(err, models) {
+      if(err) {
+        cb(err);
+      } else {
+        self.models = models;
+
+        //Initialize seneca.
+        if(config.has('seneca')) {
+          self.seneca = require('seneca')();
+        }
+
+        let crave = require('crave');
+        crave.setConfig(config.get('crave'));
+        // Recursively load all files of the specified type(s) that are also located in the specified folder.
+        crave.directory(path.resolve("./app"), ["seneca"], cb, self);
+      }
+    });
+  }
+  
+  
   setResponseHandlers(cb) {
     this.log.trace('Add application error and response handlers.');
 
@@ -458,6 +489,8 @@ class Server {
     let self = this,
       port = process.env.PORT || config.get('server.port');
 
+    self.seneca.listen();
+    /*
     self.server = self.app.listen(port, function () {
       let serverInfo = this.address();
       let address = (serverInfo.address === "0.0.0.0" || serverInfo.address === "::") ? "localhost" : serverInfo.address;
@@ -465,6 +498,7 @@ class Server {
       self.log.info("Listening on http://%s:%s with the %s config.", address, serverInfo.port, process.env.NODE_ENV || "default");
       cb();
     });
+*/
   }
 
 }

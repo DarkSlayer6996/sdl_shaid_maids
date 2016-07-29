@@ -64,7 +64,8 @@
     "i18next-express-middleware": "^1.0.1",
     "i18next-node-fs-backend": "^0.1.2",
     "i18next-sprintf-postprocessor": "^0.2.2",
-    "lodash": "^4.13.1"
+    "lodash": "^4.13.1",
+    "seneca": "^2.1.0"
   },
   "devDependencies": {
     "codecov.io": "^0.1.6",
