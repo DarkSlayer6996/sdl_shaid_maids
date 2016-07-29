@@ -1,5 +1,5 @@
 {
-  "name": "maids",
+  "name": "shaid-maids",
   "version": "0.0.1",
   "author": "Livio",
   "bugs": {
@@ -18,10 +18,20 @@
   "description": "Micro service for generating SDL application IDs.",
   "homepage": "smartdevicelink.com",
   "keywords": [
+    "API",
+    "APPID",
+    "GATEWAY",
+    "LIVIO",
     "MAIDS",
+    "MICRO",
+    "MICROSERVICE",
+    "PYLON",
+    "SDL",
+    "SERVER",
+    "SERVICE",
     "SHAID",
-    "SmartDeviceLink",
-    "SDL"
+    "SHAID-PYLON",
+    "SmartDeviceLink"
   ],
   "license": "BSD-3-Clause",
   "main": "index.js",
