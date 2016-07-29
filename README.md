@@ -3,7 +3,7 @@ Creates new and registers existing unique application IDs. Each ID stored in MAI
 
 [![Slack Status](http://sdlslack.herokuapp.com/badge.svg)](http://slack.smartdevicelink.org)
 <a href="https://travis-ci.org/smartdevicelink/sdl_shaid_maids" target="_blank"><img src="https://travis-ci.org/smartdevicelink/sdl_shaid_maids.svg"></a>
-<a href="https://codecov.io/github/smartdevicelink/sdl_shaid_maids?branch=master" target="_blank"><img src="https://codecov.io/github/smartdevicelink/sdl_maids/coverage.svg?branch=master" /></a>
+<a href="https://codecov.io/github/smartdevicelink/sdl_shaid_maids?branch=master" target="_blank"><img src="https://codecov.io/github/smartdevicelink/sdl_shaid_maids/coverage.svg?branch=master" /></a>
 [![Dependency Status](https://david-dm.org/smartdevicelink/sdl_shaid_maids.svg)](https://david-dm.org/smartdevicelink/sdl_shaid_maids)
 
 ## Documentation
@@ -14,7 +14,7 @@ The documentation is written in [DocDown](https://github.com/smartdevicelink/sdl
 ## Basic Install and Run
 
 1. ```git clone https://github.com/smartdevicelink/sdl_shaid_maids.git```
-2. ```cd sdl_maids```
+2. ```cd sdl_shaid_maids```
 3. ```npm install```
 4. ```npm start```
 5. navigate to http://localhost:3000 in your browser of choice.
