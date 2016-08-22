@@ -1,4 +1,25 @@
-module.exports = function(defaultRichErrorConfig) {
+module.exports = function(config = {}) {
+
+  /* ************************************************** *
+   * ******************** Module Variables & Constants
+   * ************************************************** */
+
+  let i18next = config.i18next;
+
+  const ERROR_LEVEL_FATAL = 'fatal',
+    ERROR_LEVEL_ERROR = 'error',
+    ERROR_LEVEL_WARN = 'warn',
+    ERROR_LEVEL_INFO = 'info',
+    ERROR_LEVEL_DEBUG = 'debug',
+    ERROR_LEVEL_TRACE = 'trace';
+
+  const DEFAULT_ERROR_MESSAGE = "Internal server error!",
+    DEFAULT_ERROR_LOCALE = "server.500.generic";
+
+
+  /* ************************************************** *
+   * ******************** Private Methods
+   * ************************************************** */
 
   let guessStatusCodeOfLocale = function (locale) {
     switch (locale) {
@@ -21,145 +42,220 @@ module.exports = function(defaultRichErrorConfig) {
     }
   };
 
+  let buildFromSystemError = function(err = new Error(DEFAULT_ERROR_MESSAGE), options = {}) {
+    let richErrorObject = {};
+    richErrorObject.error = err;
+    richErrorObject.error.code = (err.code) ? err.code.toLowerCase() : undefined;
+    richErrorObject.internalOnly = (options.internalOnly === true) ? true : false;
+    richErrorObject.internalMessage = options.internalMessage || undefined;
+    richErrorObject.level = options.level || ERROR_LEVEL_ERROR;
+    richErrorObject.messageData = options.messageData || undefined;
+    richErrorObject.options = options;
+    richErrorObject.referenceData = options.referenceData || undefined;
+    richErrorObject.statusCode = options.statusCode || 500;
+    return richErrorObject;
+  };
+
+  let buildFromLocale = function(locale = DEFAULT_ERROR_LOCALE, options = {}) {
+    let richErrorObject = {};
+    richErrorObject.error = new Error(i18next.t(locale, options.i18next));
+    richErrorObject.error.code = locale.toLowerCase();
+    richErrorObject.internalOnly = (options.internalOnly === true) ? true : false;
+    richErrorObject.internalMessage = options.internalMessage || undefined;
+    richErrorObject.level = options.level || ERROR_LEVEL_ERROR;
+    richErrorObject.messageData = options.i18next;
+    richErrorObject.options = options;
+    richErrorObject.referenceData = options.referenceData || undefined;
+    richErrorObject.statusCode = options.statusCode || guessStatusCodeOfLocale(locale);
+    return richErrorObject;
+  };
+
+  let buildFromString = function(errorString = DEFAULT_ERROR_MESSAGE, options = {}) {
+    let richErrorObject = {};
+    richErrorObject.error = new Error(errorString);
+    richErrorObject.error.code = (options.code) ? options.code.toLowerCase() : undefined;
+    richErrorObject.internalOnly = (options.internalOnly === true) ? true : false;
+    richErrorObject.internalMessage = options.internalMessage || undefined;
+    richErrorObject.level = options.level || ERROR_LEVEL_ERROR;
+    richErrorObject.messageData = options.messageData || undefined;
+    richErrorObject.options = options;
+    richErrorObject.referenceData = options.referenceData || undefined;
+    richErrorObject.statusCode = options.statusCode || 500;
+    return richErrorObject;
+  };
+
+
+  /* ************************************************** *
+   * ******************** RichError Class
+   * ************************************************** */
+
   class RichError {
-    constructor(err, richErrorOptions, richErrorConfig) {
-      this.setConfig(defaultRichErrorConfig);
-      this.setConfig(richErrorConfig);
-      this.build(err, richErrorOptions);
+    constructor(err, options) {
+      this.build(err, options);
     }
 
-    copy(err, options) {
-      let self = this;
-
-      self.options = err.options;
-      self.error = err.error;
-      self.statusCode = err.statusCode;
-      self.internalOnly = err.internalOnly;
-      self.referenceData = err.referenceData;
-
-      return self;
-    }
-
-    buildFromSystemError(err, options) {
-      let self = this;
-      if (err instanceof Error) {
-        self.error = err;
-        self.error.code = (err.code) ? err.code.toLowerCase() : undefined;
-        self.statusCode = options.statusCode || 500;
-      }
-    }
-
-    buildFromLocale(locale, options) {
-      let self = this;
-      self.error = new Error(self.i18next.t(locale, options.i18next));
-      self.error.code = locale.toLowerCase();
-      self.messageData = options.i18next;
-      self.statusCode = options.statusCode || guessStatusCodeOfLocale(locale);
-    }
-
-    buildFromString(errorString, options) {
-      let self = this;
-      self.error = new Error(errorString);
-      self.error.code = (options.code) ? options.code.toLowerCase() : undefined;
-      self.statusCode = options.statusCode || 500;
-    }
-
-    static buildInternal(err, options = {}, richErrorConfig) {
+    static buildInternal(err, options = {}) {
       options.internalOnly = true;
-      new RichError(err, options, richErrorConfig);
+      return new RichError(err, options);
     }
 
-    build(err, options = {}) {
+    copy() {
+      return new RichError(this.toObject());
+    }
+
+    build(err, options) {
       let self = this;
 
-      if(err === undefined && options.internalMessage == undefined) {
-        return undefined;
+      if(err === undefined) {
+        if(options.internalMessage === undefined) {
+          return undefined;
+        } else {
+          // Handle internal message only.
+          return undefined;
+        }
       } else {
         if (err instanceof RichError) {
-          self.copy(err, options);
+          self.set(err.toObject());
         } else {
-          self.options = options;
-
           if (err instanceof Error) {
-            self.buildFromSystemError(err, options);
-          } else if (self.i18next && self.i18next.exists(err)) {
-            self.buildFromLocale(err, options);
+            self.set(buildFromSystemError(err, options));
+          } else if(typeof err === 'string' || err instanceof String) {
+            if (i18next && i18next.exists(err)) {
+              self.set(buildFromLocale(err, options));
+            } else {
+              self.set(buildFromString(err, options));
+            }
           } else {
-            self.buildFromString(err, options);
+            self.set(err);
           }
-
-          self.internalMessage = (options.internalMessage) ? options.internalMessage : undefined;
-          self.internalOnly = (options.internalOnly === true) ? true : false;
-          self.referenceData = (options.referenceData !== undefined) ? options.referenceData : undefined;
         }
-
-        return self;
       }
+
+      return this;
     }
 
     get(key) {
-      let self = this;
-
       switch (key) {
         case "code":
-          return (self.error) ? self.error[key] : undefined;
+        case "stack":
+          return (this.error) ? this.error[key] : undefined;
         default:
-          return self[key];
+          return this[key];
       }
+    }
+
+    set(richErrorObject) {
+
+      // Node.js error object.  Contains two important child attributes "code" and "stack".
+      if(richErrorObject.error instanceof Error) {
+        this.error = richErrorObject.error;
+      } else if(richErrorObject.error !== null && typeof richErrorObject.error === 'object') {
+        this.error = new Error(richErrorObject.error.message);
+        this.error.code = richErrorObject.error.code;
+        this.error.stack = richErrorObject.error.stack;
+      }
+
+      // When true, the error should not be shown to an external client.
+      this.internalOnly = richErrorObject.internalOnly;
+
+      // An additional message to be displayed internally only.
+      this.internalMessage = richErrorObject.internalMessage;
+
+      // The error level, e.g. fatal, error, warn, info, debug, trace.
+      this.level = richErrorObject.level;
+
+      // Data that was used to create the error message, usually by i18next.
+      this.messageData = richErrorObject.messageData;
+
+      // The options used to create the Rich Error.
+      this.options = richErrorObject.options;
+
+      // Data that may have caused or is related to the error.
+      this.referenceData = richErrorObject.referenceData;
+
+      // HTTP status code associated with the error.
+      this.statusCode = richErrorObject.statusCode;
+
+      return this;
     }
 
     toObject() {
-      let self = this;
+      return {
+        error: {
+          code: this.error.code,
+          message: this.error.message,
+          stack: this.error.stack
+        },
+        internalOnly: this.internalOnly,
+        internalMessage: this.internalMessage,
+        level: this.level,
+        messageData: this.messageData,
+        options: this.options,
+        referenceData: this.referenceData,
+        statusCode: this.statusCode
+      };
+    }
 
-      if ( ! self.error) {
-        return undefined;
-      } else {
-        let err = {};
-
-        if (self.error.message) {
-          err.message = self.error.message;
+    log(logger) {
+      if(this.internalMessage) {
+        logger[this.level](this.internalMessage);
+      }
+      if(this.error) {
+        logger[this.level](JSON.stringify(this.error, undefined, 2));
+        if(this.error.stack) {
+          logger[this.level]("Stack Trace: %s", this.error.stack);
         }
-
-        if (self.error.code) {
-          err.code = self.error.code;
-        }
-
-        if (self.referenceData) {
-          err.referenceData = self.referenceData;
-        }
-
-        if(self.messageData) {
-          err.messageData = self.messageData;
-        }
-
-        if (this.enableStackTrace) {
-          err.stack = self.error.stack;
-        }
-
-        return err;
       }
     }
 
-    setConfig(richErrorConfig) {
-      if(richErrorConfig) {
-        if(richErrorConfig.i18next) {
-          this.i18next = richErrorConfig.i18next;
-        }
+    toResponseObject(options = {}) {
+      let self = this,
+        obj = {};
 
-        if(richErrorConfig.config) {
-          if(richErrorConfig.config.has('richError.enableStackTrace')) {
-            let enableStackTrace = richErrorConfig.config.get('richError.enableStackTrace');
-            if(enableStackTrace === true || enableStackTrace === false) {
-              this.enableStackTrace = enableStackTrace;
-            }
+      if(self.internalOnly !== true && options.internalOnly !== false) {
+        if (self.error && options.error !== false) {
+          let error = {},
+            errorOptions = options.error || {};
+
+          if (self.error.message && errorOptions.message !== false) {
+            error.message = self.error.message;
           }
-        }
-      }
-    }
 
-    static setDefaultConfig(richErrorConfig) {
-      defaultRichErrorConfig = richErrorConfig;
-      return RichError;
+          if (self.error.code && errorOptions.code !== false) {
+            error.code = self.error.code;
+          }
+
+          if (self.error.stack && errorOptions.stack !== false) {
+            error.stack = self.error.stack;
+          }
+
+          obj.error = error;
+        }
+
+        if (self.referenceData && options.referenceData !== false) {
+          obj.referenceData = self.referenceData;
+        }
+
+        if(self.level && options.level !== false) {
+          obj.level = self.level;
+        }
+
+        if(self.messageData && options.messageData !== false) {
+          obj.messageData = self.messageData;
+        }
+
+        if(self.referenceData && options.referenceData !== false) {
+          obj.referenceData = self.referenceData;
+        }
+
+        if(self.statusCode && options.statusCode !== false) {
+          obj.statusCode = self.statusCode;
+        }
+
+        return obj;
+      } else {
+        return undefined;
+      }
     }
 
   }

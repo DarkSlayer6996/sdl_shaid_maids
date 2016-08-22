@@ -60,17 +60,131 @@ var getType = function(v) {
 };
 
 
+let getSetting = function(config, pattern, defaultValue) {
+  if(config && config.has(pattern)) {
+    return config.get(pattern);
+  } else {
+    return defaultValue;
+  }
+};
+
+let isSettingTrue = function(config, pattern) {
+  let setting = getSetting(config, pattern, false);
+  return (setting === true);
+};
+
+
+let createApiResponse = function(apiResponseObject, cb) {
+  let data = apiResponseObject.data,
+    errors = apiResponseObject.errors,
+    options = apiResponseObject.options,
+    tasks = [],
+    warnings = apiResponseObject.warnings;
+
+  // Check if the response was handled.
+  if(data === undefined && (errors === undefined || errors.length == 0)) {
+    errors = new self.RichError('server.400.notFound');
+  }
+
+  // Create the response object and add raw data.
+  tasks.push(function(next) {
+    next(undefined, { response: data });
+  });
+
+  // Add all the current rich errors to response object.
+  tasks.push(function (responseObject, next) {
+    responseObject.errors = [];
+
+    if(errors) {
+      if (_.isArray(errors)) {
+        for (let i = 0; i < errors.length; i++) {
+          responseObject.errors.push(convertToRichError(self.RichError, errors[i]));
+        }
+      } else {
+        responseObject.errors.push(convertToRichError(self.RichError, errors));
+      }
+    }
+
+    next(undefined, responseObject);
+  });
+
+  // Sanitize and add the response data.
+  if(options.sanitizeData === true) {
+    tasks.push(function (responseObject, next) {
+      sanitize(data, options, function (err, sanitizedData) {
+        if(err) {
+          responseObject.errors.push(convertToRichError(self.RichError, err));
+          responseObject.response = null;
+          next(undefined, responseObject);
+        } else {
+          responseObject.response = sanitizedData;
+          next(undefined, responseObject);
+        }
+      })
+    });
+  }
+
+  // Format the errors.
+  tasks.push(function(responseObject, next) {
+    let highestStatusCode = 200;
+
+    if( ! responseObject.errors || ! _.isArray(responseObject.errors) || responseObject.errors.length == 0) {
+      delete responseObject.errors;
+    } else {
+      for (let i = 0; i < responseObject.errors.length; i++) {
+        if (responseObject.errors[i].statusCode && (highestStatusCode === undefined || responseObject.errors[i].statusCode > highestStatusCode)) {
+          highestStatusCode = responseObject.errors[i].get("statusCode");
+        }
+        responseObject.errors[i] = responseObject.errors[i].toResponseObject(self.richErrorResponseOptions);
+      }
+    }
+
+    next(undefined, responseObject, highestStatusCode);
+  });
+
+
+  async.waterfall(tasks, cb)
+}
+
+
+
 /* ************************************************** *
  * ******************** Response Class
  * ************************************************** */
 
-class Response {
+class ApiResponse {
   constructor(options) {
-    this.config = options.config;
-    this.i18next = options.i18next;
-    this.RichError = options.RichError;
-    this.log = options.log;
-    this.logAllResponses = (this.config && this.config.has('log.logAllResponses') && this.config.get('log.logAllResponses') === true) ? true : false;
+    this.set(options);
+  }
+
+  set(obj) {
+    this.config = obj.config;
+    this.i18next = obj.i18next;
+    this.RichError = obj.RichError;
+    this.log = obj.log;
+
+    this.logAllResponses = isSettingTrue(this.config, 'log.logAllResponses');
+    this.richErrorResponseOptions = {
+      error: {
+        stack: isSettingTrue(this.config, 'richError.enableStackTrace')
+      }
+    }
+  }
+
+  toObject() {
+
+  }
+
+
+  toObject() {
+    return {
+      config: this.config,
+      i18next: this.i18next,
+      RichError: this.RichError,
+      log: this.log,
+      logAllResponses: this.logAllResponses,
+      richErrorResponseOptions: this.richErrorResponseOptions
+    };
   }
 
   createResponseHandler() {
@@ -171,7 +285,7 @@ class Response {
           if (responseObject.errors[i].statusCode && (highestStatusCode === undefined || responseObject.errors[i].statusCode > highestStatusCode)) {
             highestStatusCode = responseObject.errors[i].get("statusCode");
           }
-          responseObject.errors[i] = responseObject.errors[i].toObject();
+          responseObject.errors[i] = responseObject.errors[i].toResponseObject(self.richErrorResponseOptions);
         }
       }
 
@@ -261,4 +375,4 @@ class Response {
 
 }
 
-module.exports = Response;
+module.exports = ApiResponse;
