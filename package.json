@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "async": "^2.0.0-rc.6",
+    "backoff": "^2.5.0",
     "body-parser": "^1.15.2",
     "bunyan": "^1.8.1",
     "bunyan-dynamo": "0.0.5",
@@ -64,7 +65,9 @@
     "i18next-express-middleware": "^1.0.1",
     "i18next-node-fs-backend": "^0.1.2",
     "i18next-sprintf-postprocessor": "^0.2.2",
-    "lodash": "^4.13.1"
+    "lodash": "^4.13.1",
+    "riposte": "0.0.5",
+    "seneca": "^2.1.0"
   },
   "devDependencies": {
     "codecov.io": "^0.1.6",

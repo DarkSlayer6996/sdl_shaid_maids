@@ -1,4 +1,5 @@
 let async = require('async'),
+  backoff = require('backoff'),
   cassandra = require('cassandra-driver'),
   path = require('path');
 
@@ -41,20 +42,52 @@ class Cqlsh {
 
   connect(cb) {
     let self = this;
+    let tryToConnect = function () {
+      self.db.connect(function (err) {
+        if (err) {
+          self.db.shutdown();
+          self.log.error(err);
+        
+          // Failed. Trying backing off
+          fibonacciBackoff.backoff(err);
+        } else {
+          self.log.trace("Connected to Cassandra cluster with %d host%s.", self.db.hosts.length, (self.db.hosts.length > 1) ? "s" : "");
+          let hostCount = 1;
+          self.db.hosts.forEach(function (host) {
+            self.log.trace('\tHost (%d/%d) - %s v%s on rack "%s" in datacenter "%s".', hostCount++, self.db.hosts.length, host.address, host.cassandraVersion, host.rack, host.datacenter);
+          });
 
-    self.db.connect(function(err) {
+          // Success! Reset the backoff delay
+          fibonacciBackoff.reset();
+          cb();
+        }
+      });
+    }
+
+    var fibonacciBackoff = backoff.fibonacci({
+      randomisationFactor: 0,
+      initialDelay: 500,
+      maxDelay: 60000
+    });
+
+    fibonacciBackoff.failAfter(30);
+
+    fibonacciBackoff.on('backoff', function (number, delay, err) {
       if(err) {
-        self.db.shutdown();
-        cb(err);
-      } else {
-        self.log.trace("Connected to Cassandra cluster with %d host%s.", self.db.hosts.length, (self.db.hosts.length > 1) ? "s": "");
-        let hostCount = 1;
-        self.db.hosts.forEach(function(host) {
-          self.log.trace('\tHost (%d/%d) - %s v%s on rack "%s" in datacenter "%s".', hostCount++, self.db.hosts.length, host.address, host.cassandraVersion, host.rack, host.datacenter);
-        });
-        cb();
+        self.log.error(`Attempt ${number} - Failed to connect to cassandra instance. Retrying in connection in ${delay} ms`);
       }
     });
+
+    fibonacciBackoff.on('ready', function (number, delay) {
+      tryToConnect();
+    });
+
+    fibonacciBackoff.on('fail', function (err) {
+      self.log.error('Failed to establish connection with cassandra instance.');
+      cb(err);
+    });
+
+    tryToConnect();
   }
 
   createKeyspace(keyspace, options, cb) {

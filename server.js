@@ -62,7 +62,6 @@ class Server {
 
     // Create a new logger instance.
     this.log = (new Log()).createLogger(config.get('log'));
-    this.RichError = RichErrorLibrary({ log: this.log, config: config });
 
     this.npmConfig = npmConfig;
 
@@ -86,7 +85,8 @@ class Server {
     tasks.push(createClassAsyncMethod(self, "initMongoose"));
     tasks.push(createClassAsyncMethod(self, "initCassandra"));
     tasks.push(createClassAsyncMethod(self, "initExpress"));
-    tasks.push(createClassAsyncMethod(self, "initApplication"));
+    //tasks.push(createClassAsyncMethod(self, "initApplication"));
+    tasks.push(createClassAsyncMethod(self, "loadSenecaApp"));
     //tasks.push(createClassAsyncMethod(self, "loadStaticData"));
     tasks.push(createClassAsyncMethod(self, "setResponseHandlers"));
     tasks.push(createClassAsyncMethod(self, "startExpressServer"));
@@ -129,6 +129,11 @@ class Server {
         cb(err);
       } else {
         self.models = models;
+
+        //Initialize seneca.
+        if(config.has('seneca')) {
+          self.seneca = require('seneca');
+        }
 
         let crave = require('crave');
         crave.setConfig(config.get('crave'));
@@ -201,8 +206,15 @@ class Server {
     let compress = require('compression'),
       express = require('express'),
       bodyParser = require('body-parser'),
+      riposte = new (require('riposte')),
       session = require('express-session'),
       userAgent = require('express-useragent');
+
+    riposte.set({
+      'i18next': self.i18next,
+      'log': self.log,
+      //'richError': self.RichError
+    });
 
     // Create an express application object.
     let app = express();
@@ -228,10 +240,7 @@ class Server {
     app.use(bodyParser.json());
 
     // Create a new response handler instance.
-    self.responseHandler = new ResponseHandler({config: config, log: self.log, RichError: self.RichError, i18next: self.i18next});
-
-    // Extend express response object.
-    app.use(self.responseHandler.createExpressMethods());
+    riposte.addExpressPreMiddleware(app);
 
     // Allow Cross-Origin Resource Sharing.
     if(config.has('server.allowCors') && config.get('server.allowCors')) {
@@ -273,7 +282,7 @@ class Server {
         }
 
         // Log all requests when trace level logging is enabled.
-        if(config.has('log.logAllRequests') && config.get('log.logAllRequests') === true) {
+        /*if(config.has('log.logAllRequests') && config.get('log.logAllRequests') === true) {
           app.all('/*', function(req, res, next) {
             switch(req.method) {
               case "POST":
@@ -286,7 +295,7 @@ class Server {
             }
             next();
           });
-        }
+        }*/
 
         // Configure i18n with express.
         if(config.has('i18n')) {
@@ -301,6 +310,7 @@ class Server {
         // Add the image folder as a static path.
         app.use('/img', express.static(path.join(__dirname + '/client/src/img'), config.get('express.static')));
 
+        self.riposte = riposte;
         self.app = app;
         cb();
       }
@@ -332,8 +342,9 @@ class Server {
       });
 
       self.i18next = i18next;
-      self.RichError = self.RichError.setDefaultConfig({ i18next: i18next });
+      self.RichError = RichErrorLibrary({ i18next: i18next });
     } else {
+      self.RichError = RichErrorLibrary();
       cb();
     }
   }
@@ -421,15 +432,42 @@ class Server {
       cb();
     }
   }
+  
+  // Load the application models and endpoints.
+  loadSenecaApp (cb) {
+    let self = this;
+    self.log.trace('Load seneca application models and endpoints.');
 
+    self.cql.loadModels(function(err, models) {
+      if(err) {
+        cb(err);
+      } else {
+        self.models = models;
+
+        //Initialize seneca.
+        if(config.has('seneca')) {
+          self.seneca = require('seneca')();
+        }
+
+        let crave = require('crave');
+        crave.setConfig(config.get('crave'));
+        // Recursively load all files of the specified type(s) that are also located in the specified folder.
+        crave.directory(path.resolve("./app"), ["seneca"], cb, self);
+      }
+    });
+  }
+  
+  
   setResponseHandlers(cb) {
     this.log.trace('Add application error and response handlers.');
 
     // Final middleware to format standard responses.
-    this.app.use(this.responseHandler.createResponseHandler());
+    //this.app.use(this.responseHandler.createResponseHandler());
 
     // Final middleware to format any error responses.
-    this.app.use(this.responseHandler.createErrorHandler());
+    //this.app.use(this.responseHandler.createErrorHandler());
+
+    this.app = this.riposte.addExpressPostMiddleware(this.app);
 
     cb();
   }
@@ -458,6 +496,8 @@ class Server {
     let self = this,
       port = process.env.PORT || config.get('server.port');
 
+    self.seneca.listen({ type: 'http', pin: 'service:maids' });
+    /*
     self.server = self.app.listen(port, function () {
       let serverInfo = this.address();
       let address = (serverInfo.address === "0.0.0.0" || serverInfo.address === "::") ? "localhost" : serverInfo.address;
@@ -465,6 +505,7 @@ class Server {
       self.log.info("Listening on http://%s:%s with the %s config.", address, serverInfo.port, process.env.NODE_ENV || "default");
       cb();
     });
+*/
   }
 
 }

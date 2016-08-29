@@ -62,6 +62,10 @@
     "enableStackTrace": true        // When true, errors returned from the server will include a stack trace.
   },
 
+  "seneca": {
+
+  },
+
   "server": {                      // Settings for the Node server.
     "AllowCors": true,              // When true, allow Cross-Origin Resource Sharing (CORS).
     "domainName": "localhost",      // Domain name used to reach the server.  (e.g. my.website.com)
