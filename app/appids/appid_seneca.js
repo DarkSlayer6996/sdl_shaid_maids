@@ -39,29 +39,18 @@ module.exports = function(server) {
   });
 
   seneca.add(PATTERN_BASE+'create', function (msg, cb) {
-    console.log("Create!");
     let createdBy = msg.user.id,
       maxNumOfIds = config.get('appIds.maxNumOfIdsInCreate'),
       numOfIds = msg.numOfIds || 1;
 
 
     if( ! _.isFinite(numOfIds)) {
-      /*let result = {
-        response: undefined,
-        errors: [
-          (new RichError('server.400.invalidParameter', {i18next: { parameter: "numOfIds", type: "number" }})).toObject()
-        ]
-      };
-      console.log(result.errors[0]);*/
-      //cb(undefined, result);
-      console.log("NumOfIds is bad")
       //cb((new RichError('server.400.invalidParameter', {i18next: { parameter: "numOfIds", type: "number" }})).toObject());
-      cb(new Error('server.400.invalidParameter'));
+      //cb(new Error('server.400.invalidParameter'));
+      respond(new Error('server.400.invalidParameter'), undefined, cb);
     } else if(numOfIds > maxNumOfIds) {
-      console.log("Num is too high")
       cb((new RichError('server.400.maxNumOfIdsInCreatedExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: numOfIds }, referenceData: ids })).toObject());
     } else {
-      console.log("Create that bitch")
       let appIds = [],
         retries;
 
@@ -91,7 +80,7 @@ module.exports = function(server) {
             cb(err);
           } else {
             reply.toObject(undefined, function(err, replyObject, replyStatusCode) {
-              console.log(replyObject);
+              log.trace(replyObject)
               cb(err, replyObject);
             });
           }
@@ -132,5 +121,31 @@ module.exports = function(server) {
     }
   }
 
+
+  function respond(err, reply, cb) {
+    let tasks = [];
+    
+    if( ! reply) {
+      reply = riposte.createReply();
+    }
+    
+    if(err) {
+      tasks.push((next) => {
+        reply.addErrors(err, function (err) {
+          if(err) {
+            next(err);
+          } else {
+            next(undefined, reply);
+          }
+        });
+      });
+    }
+    
+    tasks.push((next) => {
+      reply.toObject(undefined, next);
+    });
+
+    async.waterfall(tasks, cb);
+  }
 
 };
