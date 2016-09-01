@@ -496,7 +496,7 @@ class Server {
     let self = this,
       port = process.env.PORT || config.get('server.port');
 
-    self.seneca.listen({ type: 'http', pin: 'service:maids' });
+    self.seneca.listen({ host: process.env.MAIDS_HOST || 'localhost', type: 'http', pin: 'service:maids' });
     /*
     self.server = self.app.listen(port, function () {
       let serverInfo = this.address();
