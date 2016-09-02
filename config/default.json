@@ -1,4 +1,8 @@
 {
+  "apiTokens": {
+    "maids": "development-only-token"
+  },
+
   "appIds": {                       // Configurations for application IDs.
     "maxNumOfIdsInRegister": 50,    // Maximum number of App IDs that can be registered in a single request.
     "maxNumOfIdsInCreate": 50,      // Maximum number of App IDs that can be generated in a single request.

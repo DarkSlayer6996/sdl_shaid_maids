@@ -14,6 +14,8 @@ module.exports = function(server) {
   const CAN_SET_APP_IDS_IN_CREATE_APP_IDS = (config.has('test.canSetAppIdsInCreateAppIds') && config.get('test.canSetAppIdsInCreateAppIds') === true) ? true : false,
     CAN_SET_RETRIES_IN_CREATE_APP_IDS = (config.has('test.canSetRetriesInCreateAppIds') && config.get('test.canSetRetriesInCreateAppIds') === true) ? true : false,
     PATTERN_BASE = 'service:maids,model:appids,method:';
+
+  const API_TOKEN_MAIDS = process.env.API_TOKEN_MAIDS || config.get('apiTokens.maids');
   
   /* ************************************************** *
    * ******************** API Routes and Permissions
@@ -95,7 +97,7 @@ module.exports = function(server) {
   seneca.wrap('service:maids,model:appids', function (msg, cb) {
     log.info('[%s] ACT service: maids, model: appids\nMessage:%s', msg.id, JSON.stringify(msg, undefined, 2));
 
-    if( ! msg.access_token) {  //TODO: Verify access token is the process.env.PYLON_ACCESS_TOKEN
+    if( ! msg.access_token || msg.access_token !== API_TOKEN_MAIDS) {
       let err = new Error(i18next.t('server.400.unauthorized'));  //TODO: Convert to Rich Error.
       err.status = 401;
       respond(err, msg.id, cb);
@@ -108,20 +110,6 @@ module.exports = function(server) {
   /* ************************************************** *
    * ******************** Route Methods
    * ************************************************** */
-
-  function validateAccessToken(req, res, next) {
-    let access_token = req.headers['authorization'] || req.query.access_token;
-
-    if( ! access_token) {
-      res.setUnauthorized(next);
-    } else {
-      req.user = {
-        id: "1"
-      };
-      next();
-    }
-  }
-
 
   function respond(err, reply, cb) {
     let tasks = [];
