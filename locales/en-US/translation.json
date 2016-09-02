@@ -6,7 +6,7 @@
       "duplicateAppId": "An application ID with a value of '{{id}}' has already been registered.",
       "expiredAccessToken": "Request unauthorized because the access token provided has expired.",
       "forbidden": "The request may be authenticated, but you do not have permission to access the target resource.",
-      "invalidParameter": "The value for parameter \"{{parameter}}\" is invalid, a valid {{type}} was expected.",
+      "invalidParameter": "The value for parameter '{{parameter}}' is invalid, a valid {{type}} was expected.",
       "missingRequiredParameter": "The parameter \"{{parameter}}\" is missing or invalid.",
       "maxNumOfIdsInCreatedExceeded": "The request to create \"{{numOfIds}}\" new application IDs is larger than the allowed maximum value of \"{{maxNumOfIds}}\".",
       "maxNumOfIdsInRegisterExceeded": "The request to register \"{{numOfIds}}\" new application IDs is larger than the allowed maximum value of \"{{maxNumOfIds}}\".",

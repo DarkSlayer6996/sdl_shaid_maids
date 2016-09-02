@@ -5,8 +5,8 @@ module.exports = function(server) {
     config = server.config,
     cql = server.cql,
     db = server.cassandraClient,
-    RichError = server.RichError,
     log = server.log,
+    RichError = server.RichError,
     uuid = require('uuid'),
     _ = require('lodash');
 

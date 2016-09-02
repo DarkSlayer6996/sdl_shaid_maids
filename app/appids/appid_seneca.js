@@ -1,8 +1,10 @@
 module.exports = function(server) {
 
   let AppIds = server.models['appids'],
+    async = require('async'),
     config = server.config,
     express = require('express'),
+    i18next = server.i18next,
     log = server.log,
     RichError = server.RichError,
     riposte = server.riposte,
@@ -43,13 +45,17 @@ module.exports = function(server) {
       maxNumOfIds = config.get('appIds.maxNumOfIdsInCreate'),
       numOfIds = msg.numOfIds || 1;
 
-
     if( ! _.isFinite(numOfIds)) {
+      let err = new Error(i18next.t('server.400.invalidParameter', { parameter: "numOfIds", type: "number"}));
+      err.status = 400;
       //cb((new RichError('server.400.invalidParameter', {i18next: { parameter: "numOfIds", type: "number" }})).toObject());
       //cb(new Error('server.400.invalidParameter'));
-      respond(new Error('server.400.invalidParameter'), undefined, cb);
+      respond(err, msg.id, cb);
     } else if(numOfIds > maxNumOfIds) {
-      cb((new RichError('server.400.maxNumOfIdsInCreatedExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: numOfIds }, referenceData: ids })).toObject());
+      let err = new Error(i18next.t('server.400.maxNumOfIdsInCreatedExceeded', {maxNumOfIds: maxNumOfIds, numOfIds: numOfIds}));
+      err.status = 400;
+      respond(err, msg.id, cb);
+      //cb((new RichError('server.400.maxNumOfIdsInCreatedExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: numOfIds }, referenceData: ids })).toObject());
     } else {
       let appIds = [],
         retries;
@@ -74,15 +80,12 @@ module.exports = function(server) {
       }
 
       AppIds.insert(appIds, function (errors, results) {
-        let reply = riposte.createReply();
+        let reply = riposte.createReply({ id: msg.id });
         reply.addErrorsAndSetData(errors, results, function (err) {
           if(err) {
             cb(err);
           } else {
-            reply.toObject(undefined, function(err, replyObject, replyStatusCode) {
-              log.trace(replyObject)
-              cb(err, replyObject);
-            });
+            respond(undefined, reply, cb);
           }
         });
       }, retries);
@@ -90,15 +93,13 @@ module.exports = function(server) {
   });
 
   seneca.wrap('service:maids,model:appids', function (msg, cb) {
-    let self = this,
-    //let access_token = req.headers['authorization'] || req.query.access_token;
-    access_token = msg.access_token;
+    log.info('[%s] ACT service: maids, model: appids\nMessage:%s', msg.id, JSON.stringify(msg, undefined, 2));
 
-    if( ! access_token) {
-      console.log("Unauthorized");
-      cb(undefined, (new RichError('server.400.unauthorized')).toObject());
+    if( ! msg.access_token) {  //TODO: Verify access token is the process.env.PYLON_ACCESS_TOKEN
+      let err = new Error(i18next.t('server.400.unauthorized'));  //TODO: Convert to Rich Error.
+      err.status = 401;
+      respond(err, msg.id, cb);
     } else {
-      console.log(msg.access_token);
       delete msg.access_token;
       this.prior(msg, cb);
     }
@@ -124,28 +125,38 @@ module.exports = function(server) {
 
   function respond(err, reply, cb) {
     let tasks = [];
-    
-    if( ! reply) {
-      reply = riposte.createReply();
+
+    if(typeof reply === 'string') {
+      reply = riposte.createReply({ id: reply });
     }
-    
-    if(err) {
-      tasks.push((next) => {
+
+    tasks.push((next) => {
+      if(err) {
         reply.addErrors(err, function (err) {
-          if(err) {
+          if (err) {
             next(err);
           } else {
             next(undefined, reply);
           }
         });
-      });
-    }
+      } else {
+        next(undefined, reply);
+      }
+    });
     
-    tasks.push((next) => {
+    tasks.push((reply, next) => {
       reply.toObject(undefined, next);
     });
 
-    async.waterfall(tasks, cb);
+    async.waterfall(tasks, function(err, obj) {
+      if(err) {
+        log.error(err);
+      }
+      if(obj) {
+        log.info('[%s] Reply with Status Code: %s\nBody: %s', obj.id, obj.status, JSON.stringify(obj, undefined, 2));
+      }
+      cb(null, obj);
+    });
   }
 
 };
