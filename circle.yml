@@ -6,6 +6,10 @@ dependencies:
   override:
     - docker info
     - docker build --rm=false -t smartdevicelink/shaid-maids:$CIRCLE_SHA1 .
+    
+test:
+  override:
+    - echo "skipping tests"
 
 deployment:
   hub:
