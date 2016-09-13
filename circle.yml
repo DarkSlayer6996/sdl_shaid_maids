@@ -5,7 +5,7 @@ machine:
 dependencies:
   override:
     - docker info
-    - docker build --rm=false -t smartdevicelink/shaid-maids:$CIRCLE_SHA1 -t smartdevicelink/shaid-maids:$CIRCLE_BRANCH .
+    - docker build --rm=false -t smartdevicelink/shaid-maids:$CIRCLE_TAG .
     
 test:
   override:
@@ -13,12 +13,8 @@ test:
 
 deployment:
   hub:
-    branch: master
+    tag: /v[0-9]+(\.[0-9]+)*/
+    owner: smartdevicelink
     commands:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push smartdevicelink/shaid-maids
-    branch: develop
-    commands:
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push smartdevicelink/shaid-maids
-
