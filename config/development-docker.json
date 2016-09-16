@@ -1,0 +1,16 @@
+{
+  "server" : {                      // Settings for the Node server.
+    "domainName": "localhost",      // Domain name used to reach the server.  (e.g. my.website.com)
+    "port": 3000,                   // Port the server will be listening on.
+    "protocol": "http"              // Protocol used to reach the server. (e.g. http or https)
+  },
+
+"cassandra": {                    // Configure the Cassandra client.  See http://goo.gl/OwXliW for more info.
+    "contactPoints": ["db"]        // Array of addresses or host names of the Cassandra nodes to add as contact points.
+  },
+
+  "test": {                         // Special configurations used for testing the server.
+    "canSetAppIdsInCreateAppIds": false,  // When true, the request can include specific application IDs to count as generated.
+    "canSetRetriesInCreateAppIds": false  // When true, the request can include how many retry attempts to use when generating application IDs.
+  }
+}
