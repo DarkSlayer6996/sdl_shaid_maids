@@ -27,9 +27,15 @@ module.exports = function(server) {
       maxNumOfIds = config.get('appIds.maxNumOfIdsInRegister');
 
     if( ! ids || ! _.isArray(ids) || ids.length == 0) {
-      cb((new RichError("server.400.missingRequiredParameter", { i18next: { parameter: "ids" }, referenceData: req.body || req.query })).toObject());
+      //cb((new RichError("server.400.missingRequiredParameter", { i18next: { parameter: "ids" }, referenceData: req.body || req.query })).toObject());
+      let err = new Error(i18next.t("server.400.missingRequiredParameter", { parameter: "ids" }));
+      err.status = 400;
+      respond(err, msg.id, cb);
     } else if(ids.length > maxNumOfIds) {
-      cb((new RichError('server.400.maxNumOfIdsInRegisterExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }, referenceData: ids })).toObject);
+      //cb((new RichError('server.400.maxNumOfIdsInRegisterExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }, referenceData: ids })).toObject);
+      let err = new Error(i18next.t("server.400.maxNumOfIdsInRegisterExceeded", { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }));
+      err.status = 400;
+      respond(err, msg.id, cb);
     } else {
       let appIds = [];
       for(let i = 0; i < ids.length; i++) {
@@ -37,7 +43,14 @@ module.exports = function(server) {
       }
 
       AppIds.insert(appIds, function (errors, results) {
-        cb(errors, results);
+        let reply = riposte.createReply({ id: msg.id });
+        reply.addErrorsAndSetData(errors, results, function (err) {
+          if(err) {
+            cb(err);
+          } else {
+            respond(undefined, reply, cb);
+          }
+        });
       });
     }
   });
