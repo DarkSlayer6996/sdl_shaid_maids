@@ -7,6 +7,7 @@ module.exports = function(server) {
     db = server.cassandraClient,
     log = server.log,
     RichError = server.RichError,
+    i18next = server.i18next,
     uuid = require('uuid'),
     _ = require('lodash');
 
@@ -90,7 +91,10 @@ module.exports = function(server) {
               appId.generateNewId();
               insertAppId(appId, cb, --retries);
             } else {
-              cb(new RichError("server.400.duplicateAppId", { i18next: { id: appId.get("id") }, referenceData: appId.toObject() }));
+              //cb(new RichError("server.400.duplicateAppId", { i18next: { id: appId.get("id") }, referenceData: appId.toObject() }));
+              let err = new Error(i18next.t('server.400.duplicateAppId', { id: appId.get("id") }));
+              err.status = 400;
+              cb(err);
             }
           }
         }
