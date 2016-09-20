@@ -8,6 +8,8 @@ RUN npm install
 
 COPY . /usr/src/app/
 
+RUN chmod +x scripts/wait-for-it.sh
+
 EXPOSE 10101
 
 CMD ["node", "index.js"]
