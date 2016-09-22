@@ -1,5 +1,5 @@
 "use strict";
-/* eslint no-console: 0 */
+
 
 /* ************************************************** *
  * ******************** NPM Modules
@@ -24,8 +24,7 @@ const applicationPath = path.resolve("./app"),
 
 const Cql = require(path.resolve('./libs/cql')),
   RichErrorLibrary = require(path.resolve('./libs/richError/')),
-  Log = require(path.resolve('./libs/log')),
-  ResponseHandler = require(path.resolve('./libs/response'));
+  Log = require(path.resolve('./libs/log'));
 
 
 /* ************************************************** *
@@ -82,7 +81,6 @@ class Server {
 
     tasks.push(createClassAsyncMethod(self, "initI18next"));
     tasks.push(createClassAsyncMethod(self, "initDynamoDB"));
-    tasks.push(createClassAsyncMethod(self, "initMongoose"));
     tasks.push(createClassAsyncMethod(self, "initCassandra"));
     tasks.push(createClassAsyncMethod(self, "initExpress"));
     //tasks.push(createClassAsyncMethod(self, "initApplication"));
@@ -95,7 +93,7 @@ class Server {
       if(err) {
         self.log.error(err);
       } else {
-        self.emit('ready', self.app);
+        self.emit('ready', self.seneca);
       }
     });
 
@@ -349,30 +347,6 @@ class Server {
     }
   }
 
-  initMongoose(cb) {
-    if(config.has('mongoose')) {
-      let self = this;
-      self.log.trace('Initializing Mongoose.');
-
-      let mongoose = require('mongoose');
-
-      mongoose.connect(config.get('mongoose.uri'), config.get('mongoose.options'));
-
-      // Set-up listeners for mongoose
-      mongoose.connection.once('error', function (err) {
-        cb(new self.RichError('MongoDB connection failed ' + err.message));
-      });
-
-      mongoose.connection.once('open', function () {
-        self.log.info('MongoDB connected successfully: %s', config.get('mongoose.uri').replace(/mongodb:\/\/(.*:.*)@/ig, ''));
-        self.mongoose = mongoose;
-        cb();
-      });
-    } else {
-      cb();
-    }
-  }
-
   initSessionStore(cb) {
     let self = this;
     if(config.has('session')) {
@@ -497,6 +471,8 @@ class Server {
       port = process.env.PORT || config.get('server.port');
 
     self.seneca.listen({ host: process.env.MAIDS_HOST || 'localhost', type: 'http', pin: 'service:maids' });
+
+    self.seneca.ready(cb);
     /*
     self.server = self.app.listen(port, function () {
       let serverInfo = this.address();

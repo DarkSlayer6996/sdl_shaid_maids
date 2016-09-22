@@ -126,7 +126,7 @@ module.exports = function(server) {
 
   function respond(err, reply, cb) {
     let tasks = [];
-
+    
     if(typeof reply === 'string') {
       reply = riposte.createReply({ id: reply });
     }
