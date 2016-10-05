@@ -22,4 +22,4 @@ deployment:
       - git config --global user.name "$GIT_NAME"
       - curl -O https://raw.githubusercontent.com/livio/scripts/master/docker/compose-update.sh
       - chmod +x compose-update.sh
-      - ./compose-update.sh $CIRCLE_TAG smartdevicelink sdl_shaid smartdevicelink/shaid-maids docker-compose.yml "Bumped shaid-maids version $CIRCLE_TAG"
+      - ./compose-update.sh $CIRCLE_TAG smartdevicelink sdl_shaid smartdevicelink/shaid-maids "Bumped shaid-maids version $CIRCLE_TAG" docker-compose.yml ./scripts/deploy-to-ecs.staging.sh
