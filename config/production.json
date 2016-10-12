@@ -7,7 +7,7 @@
 
   "cassandra": {                    // Configure the Cassandra client.  See http://goo.gl/OwXliW for more info.
     "dropKeyspaceOnInit": false,    // When true, the keyspace(s) will be cleared on every initialization.  Resulting in an empty database on every server restart.
-    "contactPoints": ["ip-172-31-4-10.ec2.internal", "ip-172-31-4-11.ec2.internal"],        // Array of addresses or host names of the Cassandra nodes to add as contact points.
+    "contactPoints": ["ip-172-31-58-34.ec2.internal", "ip-172-31-58-35.ec2.internal"],        // Array of addresses or host names of the Cassandra nodes to add as contact points.
     "durableWrites": true,          // When set to false, data written to the keyspace bypasses the commit log.  Be careful using this option because you risk losing data.  Must be true when using replication class "SimpleStrategy".
     "keyspace": "sdl_shaid_maids",            // Name of the top-level namespace used by the application.  Similar to a database name.
     "replication": {                // Configure cassandra replication for the keyspace specified, see https://goo.gl/zFFJiv
