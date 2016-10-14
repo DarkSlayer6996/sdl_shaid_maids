@@ -11,6 +11,7 @@ const async = require('async'),
   fs = require('fs'),
   os = require('os'),
   path = require('path'),
+  Remie = require('remie'),
   util = require('util');
 
 // Path to the node.js application files. (e.g. api endpoints)
@@ -23,7 +24,6 @@ const applicationPath = path.resolve("./app"),
  * ************************************************** */
 
 const Cql = require(path.resolve('./libs/cql')),
-  RichErrorLibrary = require(path.resolve('./libs/richError/')),
   Log = require(path.resolve('./libs/log'));
 
 
@@ -340,9 +340,9 @@ class Server {
       });
 
       self.i18next = i18next;
-      self.RichError = RichErrorLibrary({ i18next: i18next });
+      self.remie = new Remie({ i18next: i18next });
     } else {
-      self.RichError = RichErrorLibrary();
+      self.remie = new Remie();
       cb();
     }
   }

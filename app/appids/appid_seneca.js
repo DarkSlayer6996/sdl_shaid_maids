@@ -6,7 +6,7 @@ module.exports = function(server) {
     express = require('express'),
     i18next = server.i18next,
     log = server.log,
-    RichError = server.RichError,
+    remie = server.remie,
     riposte = server.riposte,
     seneca = server.seneca,
     _ = require('lodash');
@@ -27,14 +27,29 @@ module.exports = function(server) {
       maxNumOfIds = config.get('appIds.maxNumOfIdsInRegister');
 
     if( ! ids || ! _.isArray(ids) || ids.length == 0) {
+      let err = remie.create("server.400.missingRequiredParameter", {
+        messageData: {
+          parameter: "ids"
+        },
+        referenceData: msg.ids
+      });
       //cb((new RichError("server.400.missingRequiredParameter", { i18next: { parameter: "ids" }, referenceData: req.body || req.query })).toObject());
-      let err = new Error(i18next.t("server.400.missingRequiredParameter", { parameter: "ids" }));
-      err.status = 400;
+
+      //let err = new Error(i18next.t("server.400.missingRequiredParameter", { parameter: "ids" }));
+      //err.status = 400;
       respond(err, msg.id, cb);
     } else if(ids.length > maxNumOfIds) {
+      let err = remie.create("server.400.maxNumOfIdsInRegisterExceeded", {
+        messageData: {
+          maxNumOfIds: maxNumOfIds,
+          numOfIds: ids.length
+        },
+        referenceData: ids
+      });
       //cb((new RichError('server.400.maxNumOfIdsInRegisterExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }, referenceData: ids })).toObject);
-      let err = new Error(i18next.t("server.400.maxNumOfIdsInRegisterExceeded", { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }));
-      err.status = 400;
+
+      //let err = new Error(i18next.t("server.400.maxNumOfIdsInRegisterExceeded", { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }));
+      //err.status = 400;
       respond(err, msg.id, cb);
     } else {
       let appIds = [];
@@ -61,16 +76,31 @@ module.exports = function(server) {
       numOfIds = msg.numOfIds || 1;
 
     if( ! _.isFinite(numOfIds)) {
-      let err = new Error(i18next.t('server.400.invalidParameter', { parameter: "numOfIds", type: "number"}));
-      err.status = 400;
+      let err = remie.create("server.400.maxNumOfIdsInCreatedExceeded", {
+        messageData: {
+          parameter: "numOfIds",
+          type: "number"
+        }
+      });
+
       //cb((new RichError('server.400.invalidParameter', {i18next: { parameter: "numOfIds", type: "number" }})).toObject());
       //cb(new Error('server.400.invalidParameter'));
+
+      //let err = new Error(i18next.t('server.400.invalidParameter', { parameter: "numOfIds", type: "number"}));
+      //err.status = 400;
       respond(err, msg.id, cb);
     } else if(numOfIds > maxNumOfIds) {
-      let err = new Error(i18next.t('server.400.maxNumOfIdsInCreatedExceeded', {maxNumOfIds: maxNumOfIds, numOfIds: numOfIds}));
-      err.status = 400;
-      respond(err, msg.id, cb);
+      let err = remie.create("server.400.maxNumOfIdsInCreatedExceeded", {
+        messageData: {
+          maxNumOfIds: maxNumOfIds,
+          numOfIds: numOfIds
+        }
+      });
       //cb((new RichError('server.400.maxNumOfIdsInCreatedExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: numOfIds }, referenceData: ids })).toObject());
+
+      //let err = new Error(i18next.t('server.400.maxNumOfIdsInCreatedExceeded', {maxNumOfIds: maxNumOfIds, numOfIds: numOfIds}));
+      //err.status = 400;
+      respond(err, msg.id, cb);
     } else {
       let appIds = [],
         retries;
@@ -111,8 +141,11 @@ module.exports = function(server) {
     log.info('[%s] ACT service: maids, model: appids\nMessage:%s', msg.id, JSON.stringify(msg, undefined, 2));
 
     if( ! msg.access_token || msg.access_token !== API_TOKEN_MAIDS) {
-      let err = new Error(i18next.t('server.400.unauthorized'));  //TODO: Convert to Rich Error.
-      err.status = 401;
+      let err = remie.create("server.400.unauthorized", {
+        internalMessage: "Access token is missing or invalid."
+      });
+      //let err = new Error(i18next.t('server.400.unauthorized'));  //TODO: Convert to Rich Error.
+      //err.status = 401;
       respond(err, msg.id, cb);
     } else {
       delete msg.access_token;
@@ -154,7 +187,7 @@ module.exports = function(server) {
         log.error(err);
       }
       if(obj) {
-        log.info('[%s] Reply with Status Code: %s\nBody: %s', obj.id, obj.status, JSON.stringify(obj, undefined, 2));
+        log.info('[%s] Reply with Status Code: %s\nBody: %s', obj.id, obj.httpStatusCode, JSON.stringify(obj, undefined, 2));
       }
       cb(null, obj);
     });
