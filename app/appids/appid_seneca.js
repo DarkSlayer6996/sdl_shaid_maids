@@ -33,11 +33,7 @@ module.exports = function(server) {
         },
         referenceData: msg.ids
       });
-      //cb((new RichError("server.400.missingRequiredParameter", { i18next: { parameter: "ids" }, referenceData: req.body || req.query })).toObject());
-
-      //let err = new Error(i18next.t("server.400.missingRequiredParameter", { parameter: "ids" }));
-      //err.status = 400;
-      respond(err, msg.id, cb);
+      riposte.createReply({ id: msg.id }).addErrorsAndSend(err, cb);
     } else if(ids.length > maxNumOfIds) {
       let err = remie.create("server.400.maxNumOfIdsInRegisterExceeded", {
         messageData: {
@@ -179,7 +175,7 @@ module.exports = function(server) {
     });
     
     tasks.push((reply, next) => {
-      reply.toObject(undefined, next);
+      reply.toObject(next);
     });
 
     async.waterfall(tasks, function(err, obj) {

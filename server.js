@@ -12,6 +12,7 @@ const async = require('async'),
   os = require('os'),
   path = require('path'),
   Remie = require('remie'),
+  Riposte = require('riposte'),
   util = require('util');
 
 // Path to the node.js application files. (e.g. api endpoints)
@@ -83,6 +84,7 @@ class Server {
     tasks.push(createClassAsyncMethod(self, "initDynamoDB"));
     tasks.push(createClassAsyncMethod(self, "initCassandra"));
     tasks.push(createClassAsyncMethod(self, "initExpress"));
+    tasks.push(createClassAsyncMethod(self, "configureRiposte"));
     //tasks.push(createClassAsyncMethod(self, "initApplication"));
     tasks.push(createClassAsyncMethod(self, "loadSenecaApp"));
     //tasks.push(createClassAsyncMethod(self, "loadStaticData"));
@@ -116,6 +118,14 @@ class Server {
   /* ************************************************** *
    * ******************** Private Methods
    * ************************************************** */
+
+  configureRiposte(cb) {
+    let self = this;
+    self.riposte.use(Riposte.HANDLE_SANITIZE_REPLY_DATA, function (data, options = {}, next, riposte) {
+      next(undefined, data);
+    });
+    cb();
+  }
 
   // Load the application models and endpoints.
   initApplication (cb) {
@@ -204,14 +214,13 @@ class Server {
     let compress = require('compression'),
       express = require('express'),
       bodyParser = require('body-parser'),
-      riposte = new (require('riposte')),
+      riposte = new Riposte(),
       session = require('express-session'),
       userAgent = require('express-useragent');
 
     riposte.set({
-      'i18next': self.i18next,
-      'log': self.log,
-      //'richError': self.RichError
+      log: self.log,
+      remie: self.remie
     });
 
     // Create an express application object.
