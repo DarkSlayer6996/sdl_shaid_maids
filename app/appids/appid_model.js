@@ -6,7 +6,6 @@ module.exports = function(server) {
     cql = server.cql,
     db = server.cassandraClient,
     log = server.log,
-    i18next = server.i18next,
     remie = server.remie,
     uuid = require('uuid'),
     _ = require('lodash');
@@ -41,7 +40,6 @@ module.exports = function(server) {
   let insertAppIds = function (appIds, cb, retries) {
     if( ! appIds) {
       cb(remie.createInternal("insertAppIds(): AppIds is undefined, taking no action."));
-      //cb(RichError.buildInternal("insertAppIds(): AppIds is undefined, taking no action."));
     } else {
       if (_.isArray(appIds)) {
         if (appIds.length == 0) {
@@ -75,13 +73,11 @@ module.exports = function(server) {
   let insertAppId = function(appId, cb, retries = APP_IDS_MAX_GEN_RETRY) {
     if( ! appId) {
       cb(remie.createInternal("insertAppId(): AppId is undefined, taking no action."));
-      //cb(RichError.buildInternal("insertAppId(): AppId is undefined, taking no action."));
     } else {
       log.trace("insertAppId():  Query to insert App ID.\n%s", JSON.stringify({ query: QUERY_INSERT_APP_ID, params: appId.toParams() }, undefined, 2));
       db.execute(QUERY_INSERT_APP_ID, appId.toParams(), QUERY_OPTIONS_PREPARED, function (err, rs) {
         if (err) {
           cb(remie.create(err, { referenceData: appId.toObject() }));
-          //cb(new RichError(err, { referenceData: appId.toObject() }));
         } else {
           log.trace("insertAppId():  Results from the query to insert App ID.\n%s", JSON.stringify(rs, undefined, 2));
 
@@ -100,11 +96,6 @@ module.exports = function(server) {
                 },
                 referenceData: appId.toObject()
               }));
-              //cb(new RichError("server.400.duplicateAppId", { i18next: { id: appId.get("id") }, referenceData: appId.toObject() }));
-
-              //let err = new Error(i18next.t('server.400.duplicateAppId', { id: appId.get("id") }));
-              //err.status = 400;
-              //cb(err);
             }
           }
         }

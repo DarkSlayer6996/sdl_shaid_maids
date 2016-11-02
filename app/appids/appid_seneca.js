@@ -3,8 +3,6 @@ module.exports = function(server) {
   let AppIds = server.models['appids'],
     async = require('async'),
     config = server.config,
-    express = require('express'),
-    i18next = server.i18next,
     log = server.log,
     remie = server.remie,
     riposte = server.riposte,
@@ -42,11 +40,7 @@ module.exports = function(server) {
         },
         referenceData: ids
       });
-      //cb((new RichError('server.400.maxNumOfIdsInRegisterExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }, referenceData: ids })).toObject);
-
-      //let err = new Error(i18next.t("server.400.maxNumOfIdsInRegisterExceeded", { maxNumOfIds: maxNumOfIds, numOfIds: ids.length }));
-      //err.status = 400;
-      respond(err, msg.id, cb);
+      riposte.createReply({ id: msg.id}).addErrorsAndSend(err, cb);
     } else {
       let appIds = [];
       for(let i = 0; i < ids.length; i++) {
@@ -54,14 +48,7 @@ module.exports = function(server) {
       }
 
       AppIds.insert(appIds, function (errors, results) {
-        let reply = riposte.createReply({ id: msg.id });
-        reply.addErrorsAndSetData(errors, results, function (err) {
-          if(err) {
-            cb(err);
-          } else {
-            respond(undefined, reply, cb);
-          }
-        });
+        riposte.createReply({ id: msg.id }).addAndSend(errors, results, cb);
       });
     }
   });
@@ -72,19 +59,13 @@ module.exports = function(server) {
       numOfIds = msg.numOfIds || 1;
 
     if( ! _.isFinite(numOfIds)) {
-      let err = remie.create("server.400.maxNumOfIdsInCreatedExceeded", {
+      let err = remie.create("server.400.invalidParameter", {
         messageData: {
           parameter: "numOfIds",
           type: "number"
         }
       });
-
-      //cb((new RichError('server.400.invalidParameter', {i18next: { parameter: "numOfIds", type: "number" }})).toObject());
-      //cb(new Error('server.400.invalidParameter'));
-
-      //let err = new Error(i18next.t('server.400.invalidParameter', { parameter: "numOfIds", type: "number"}));
-      //err.status = 400;
-      respond(err, msg.id, cb);
+      riposte.createReply({ id: msg.id }).addErrorsAndSend(err, cb);
     } else if(numOfIds > maxNumOfIds) {
       let err = remie.create("server.400.maxNumOfIdsInCreatedExceeded", {
         messageData: {
@@ -92,11 +73,7 @@ module.exports = function(server) {
           numOfIds: numOfIds
         }
       });
-      //cb((new RichError('server.400.maxNumOfIdsInCreatedExceeded', { i18next: { maxNumOfIds: maxNumOfIds, numOfIds: numOfIds }, referenceData: ids })).toObject());
-
-      //let err = new Error(i18next.t('server.400.maxNumOfIdsInCreatedExceeded', {maxNumOfIds: maxNumOfIds, numOfIds: numOfIds}));
-      //err.status = 400;
-      respond(err, msg.id, cb);
+      riposte.createReply({ id: msg.id }).addErrorsAndSend(err, cb);
     } else {
       let appIds = [],
         retries;
@@ -121,14 +98,7 @@ module.exports = function(server) {
       }
 
       AppIds.insert(appIds, function (errors, results) {
-        let reply = riposte.createReply({ id: msg.id });
-        reply.addErrorsAndSetData(errors, results, function (err) {
-          if(err) {
-            cb(err);
-          } else {
-            respond(undefined, reply, cb);
-          }
-        });
+        riposte.createReply({ id: msg.id }).addAndSend(errors, results, cb);
       }, retries);
     }
   });
@@ -140,53 +110,11 @@ module.exports = function(server) {
       let err = remie.create("server.400.unauthorized", {
         internalMessage: "Access token is missing or invalid."
       });
-      //let err = new Error(i18next.t('server.400.unauthorized'));  //TODO: Convert to Rich Error.
-      //err.status = 401;
-      respond(err, msg.id, cb);
+      riposte.createReply({ id: msg.id }).addErrorsAndSend(err, cb);
     } else {
       delete msg.access_token;
       this.prior(msg, cb);
     }
   });
-
-  /* ************************************************** *
-   * ******************** Route Methods
-   * ************************************************** */
-
-  function respond(err, reply, cb) {
-    let tasks = [];
-    
-    if(typeof reply === 'string') {
-      reply = riposte.createReply({ id: reply });
-    }
-
-    tasks.push((next) => {
-      if(err) {
-        reply.addErrors(err, function (err) {
-          if (err) {
-            next(err);
-          } else {
-            next(undefined, reply);
-          }
-        });
-      } else {
-        next(undefined, reply);
-      }
-    });
-    
-    tasks.push((reply, next) => {
-      reply.toObject(next);
-    });
-
-    async.waterfall(tasks, function(err, obj) {
-      if(err) {
-        log.error(err);
-      }
-      if(obj) {
-        log.info('[%s] Reply with Status Code: %s\nBody: %s', obj.id, obj.httpStatusCode, JSON.stringify(obj, undefined, 2));
-      }
-      cb(null, obj);
-    });
-  }
 
 };
