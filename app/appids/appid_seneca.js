@@ -80,17 +80,17 @@ module.exports = function(server) {
         retries;
 
       if (CAN_SET_RETRIES_IN_CREATE_APP_IDS) {
-        retries = req.body.retries;
+        retries = msg.retries;
       }
 
-      if (CAN_SET_APP_IDS_IN_CREATE_APP_IDS && req.body.ids !== undefined) {
+      if (CAN_SET_APP_IDS_IN_CREATE_APP_IDS && msg.ids !== undefined) {
         for (let i = 0; i < numOfIds; i++) {
           let columns = {
             createdBy: createdBy,
             isGenerated: true
           };
-          if (req.body.ids && i < req.body.ids.length) {
-            columns.id = req.body.ids[i];
+          if (msg.ids && i < msg.ids.length) {
+            columns.id = msg.ids[i];
           }
           appIds.push(AppIds.create(columns));
         }
