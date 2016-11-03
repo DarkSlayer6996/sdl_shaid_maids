@@ -44,6 +44,7 @@ module.exports = function(server) {
     } else {
       let appIds = [];
       for(let i = 0; i < ids.length; i++) {
+        if(ids[i])
         appIds.push(AppIds.create({ id: ids[i], createdBy: createdBy }));
       }
 

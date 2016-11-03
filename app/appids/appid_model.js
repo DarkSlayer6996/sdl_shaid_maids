@@ -121,7 +121,7 @@ module.exports = function(server) {
       }
 
       if(columns.id) {
-        this.columns.id = columns.id;
+        this.columns.id = "" + columns.id;
         if(this.columns.isGenerated === undefined) {
           this.columns.isGenerated = false;
         }
