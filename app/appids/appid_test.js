@@ -22,7 +22,7 @@ module.exports = function(server) {
    * ******************** Message Patterns
    * ************************************************** */
 
-  let PATTERN_REGISTER_V0 = {
+  const PATTERN_REGISTER_V0 = {
     access_token: API_TOKEN_MAIDS,
     id: "1",
     ids: [],
@@ -31,6 +31,13 @@ module.exports = function(server) {
     service: "maids",
     user: { id: adminUserId },
     version: 0
+  };
+
+  let getRegisterPattern = function(version = 0) {
+    switch(version) {
+      default:
+        return JSON.parse(JSON.stringify(PATTERN_REGISTER_V0));
+    }
   };
   
 
@@ -231,6 +238,53 @@ module.exports = function(server) {
     async.series(tasks, cb);
   };
 
+  let vrMaxNumOfIds = function(err, pattern, res, cb, isRegister = true) {
+    if(err) {
+      return cb(err);
+    }
+
+    let tasks = [];
+
+    tasks.push(next => {
+      validateResponseStructure(res, next);
+    });
+
+    tasks.push(next => {
+      validateHttpStatusCode(res, 400, next);
+    });
+
+    assert(res.errors.length, 1, "Unexpected number of errors returned");
+    tasks.push(next => {
+      compareLocaleError(res.errors[0], 'server.400.maxNumOfIdsInRegisterExceeded', { numOfIds: pattern.ids.length, maxNumOfIds: config.get('appIds.maxNumOfIdsInRegister') }, 400, next);
+    });
+
+    async.series(tasks, cb);
+  };
+
+  /*
+  let vrMissingRequiredParameter = function(err, pattern, res, cb) {
+    if(err) {
+      return cb(err);
+    }
+
+    let tasks = [];
+
+    tasks.push(next => {
+      validateResponseStructure(res, next);
+    });
+
+    tasks.push(next => {
+      validateHttpStatusCode(res, 400, next);
+    });
+
+    assert(res.errors.length, 1, "Unexpected number of errors returned");
+    tasks.push(next => {
+      compareLocaleError(res.errors[0], 'server.400.maxNumOfIdsInRegisterExceeded', { numOfIds: pattern.ids.length, maxNumOfIds: config.get('appIds.maxNumOfIdsInRegister') }, 400, next);
+    });
+
+    async.series(tasks, cb);
+  };
+*/
   /*
   let validateMissingRequiredParameter = function(res, parameter, cb, index = 0) {
     assert(res, true);
@@ -239,18 +293,6 @@ module.exports = function(server) {
     assert(_.isArray(res.body.errors), true);
     assert(res.body.errors.length > index, true);
     validateLocaleError(res.body.errors[index], 'server.400.duplicateAppId', {parameter: parameter});
-    if(cb) {
-      cb();
-    }
-  };
-
-  let validateMaxNumOfIdsInRegisterExceeded = function(res, numOfIds, maxNumOfIds, cb, index = 0) {
-    assert(res, true);
-    assert(res.body, true);
-    assert(res.body.errors, true);
-    assert(_.isArray(res.body.errors), true);
-    assert(res.body.errors.length > index, true);
-    validateLocaleError(res.body.errors[index], 'server.400.maxNumOfIdsInRegisterExceeded', { numOfIds: numOfIds, maxNumOfIds: maxNumOfIds});
     if(cb) {
       cb();
     }
@@ -290,7 +332,7 @@ module.exports = function(server) {
     describe("can be registered", function () {
 
       it("if the single application ID doesn't already exist", function (done) {
-        let pattern = PATTERN_REGISTER_V0;
+        let pattern = getRegisterPattern();
         pattern.ids = [ "1" ];
         
         seneca.act(pattern, function (err, res) {
@@ -299,7 +341,7 @@ module.exports = function(server) {
       });
 
       it("if multiple application IDs don't already exist", function (done) {
-        let pattern = PATTERN_REGISTER_V0;
+        let pattern = getRegisterPattern();
         pattern.ids = [ "1","2","3" ];
 
         seneca.act(pattern, function (err, res) {
@@ -308,7 +350,7 @@ module.exports = function(server) {
       });
 
       it("if one or more of the application IDs are numbers", function (done) {
-        let pattern = PATTERN_REGISTER_V0;
+        let pattern = getRegisterPattern();
         pattern.ids = [ 1, "2", 3 ];
 
         seneca.act(pattern, function (err, res) {
@@ -321,7 +363,7 @@ module.exports = function(server) {
     describe("cannot be registered", function () {
 
       it("if the application ID already exist", function (done) {
-        let pattern = PATTERN_REGISTER_V0;
+        let pattern = getRegisterPattern();
         pattern.ids = [ "1" ];
 
         // Register the application ID.
@@ -337,7 +379,7 @@ module.exports = function(server) {
       });
 
       it("if multiple application IDs already exist", function (done) {
-        let pattern = PATTERN_REGISTER_V0;
+        let pattern = getRegisterPattern();
         pattern.ids = [ "1","2","3" ];
 
         // Register the application IDs.
@@ -353,7 +395,7 @@ module.exports = function(server) {
       });
 
       it("if the ids parameter is missing", function (done) {
-        let pattern = PATTERN_REGISTER_V0;
+        let pattern = getRegisterPattern();
         pattern.ids = undefined;
 
         // Register the application IDs.
@@ -363,7 +405,7 @@ module.exports = function(server) {
       });
 
       it("if the ids parameter is invalid", function (done) {
-        let pattern = PATTERN_REGISTER_V0;
+        let pattern = getRegisterPattern();
         pattern.ids = 1;
 
         // Register the application IDs.
@@ -371,125 +413,150 @@ module.exports = function(server) {
           vrInvalidParameter(err, pattern, res, "ids", "array", done);
         });
       });
-/*
+
       it("if the number of IDs is too large", function (done) {
-        let ids = [],
+        let pattern = getRegisterPattern(),
           maxNumOfIds = config.get('appIds.maxNumOfIdsInRegister');
 
         for(let i = 0; i <= maxNumOfIds; i++) {
-          ids.push(i.toString());
+          pattern.ids.push(i.toString());
         }
 
-        let end = function (err, res) {
-          if(err) {
-            done(err);
-          } else {
-            validateMaxNumOfIdsInRegisterExceeded(res, ids.length, maxNumOfIds, done);
-          }
-        };
-
-        app.post('/maids/0/appids/register')
-          .send()
-          .set("Authorization", adminAccessToken)
-          .expect("Content-Type", /json/)
-          .expect(400)
-          .end(end);
+        seneca.act(pattern, function (err, res) {
+          vrMaxNumOfIds(err, pattern, res, done);
+        });
       });
-*/
+
     });
-/*
+
     describe("can have some register and some fail to register", function() {
 
       it("if one of the application IDs already exist", function (done) {
-        let existingAppIds = ["1"],
-          expectedAppIds = [{
-            createdBy: adminUserId,
-            id: "2",
-            isGenerated: false
-          }, {
-            createdBy: adminUserId,
-            id: "3",
-            isGenerated: false
-          }],
-          newAppIds = expectedAppIds.map(function (appId) {
-            return appId.id;
-          }),
-          allAppIds = existingAppIds.concat(newAppIds);
+        let pattern = getRegisterPattern(),
+          patternOfDuplicates = getRegisterPattern();
 
-        let end = function (err, res) {
-          if(err) {
-            done(err);
-          } else {
-            validateDuplicateAppIdErrors(res, existingAppIds);
-            compareAppIds(res.body.response, expectedAppIds, done);
+        pattern.ids = [ "0", "1" ];
+        patternOfDuplicates.ids = [ "1" ];
+
+        let patternNoDuplicates = JSON.parse(JSON.stringify(pattern));
+
+        // Remove duplicate ids from patternNoDuplicates list.
+        for(let i = 0; i < patternOfDuplicates.ids.length; i++) {
+          let index = patternNoDuplicates.ids.indexOf(patternOfDuplicates.ids[i]);
+          if(index > -1) {
+            patternNoDuplicates.ids.splice(index, 1);
           }
-        };
+        }
 
-        let createAppIdCallback = function (err, res) {
-          if (err) {
-            done(err);
-          } else {
-            app.post('/maids/0/appids/register')
-              .send({ ids: allAppIds })
-              .set("Authorization", adminAccessToken)
-              .expect("Content-Type", /json/)
-              .expect(400)
-              .end(end);
-          }
-        };
+        // Register the first application ID.
+        seneca.act(patternOfDuplicates, function (err, res) {
+          vrRegisterAppIds(err, patternOfDuplicates, res, function(err) {
+            if(err) {
+              done(err);
+            } else {
+              // Attempt to register both application IDs
+              seneca.act(pattern, function(err, res) {
+                if(err) {
+                  return done(err);
+                } else {
+                  let tasks = [];
 
-        app.post('/maids/0/appids/register')
-          .send({ ids: existingAppIds })
-          .set("Authorization", adminAccessToken)
-          .expect("Content-Type", /json/)
-          .expect(200)
-          .end(createAppIdCallback);
+                  tasks.push(next => {
+                    validateResponseStructure(res, next);
+                  });
+
+                  tasks.push(next => {
+                    validateHttpStatusCode(res, (patternOfDuplicates.ids.length > 0) ? 400 : 200, next);
+                  });
+
+                  expect(res.errors).to.be.a('array');
+                  assert(res.errors.length, patternOfDuplicates.ids.length, "Unexpected number of errors.");
+                  for (let i = 0; i < res.errors.length; i++) {
+                    tasks.push(next => {
+                      compareLocaleError(res.errors[i], 'server.400.duplicateAppId', {id: patternOfDuplicates.ids[i]}, 400, next);
+                    });
+                  }
+
+                  tasks.push(next => {
+                    expect(res.data).to.be.a('array');
+                    expect(res.data.length, patternNoDuplicates.ids.length, "Unexpected number of successfully registered AppIds.");
+                    createExpectedAppIds(patternNoDuplicates, next);
+                  });
+
+                  tasks.push((expected, next) => {
+                    compareAppIds(res.data, expected, next);
+                  });
+
+                  async.waterfall(tasks, done);
+                }
+              });
+            }
+          });
+        });
       });
 
       it("if multiple of the application IDs already exist", function (done) {
-        let existingAppIds = ["1", "2"],
-          expectedAppIds = [{
-            createdBy: adminUserId,
-            id: "3",
-            isGenerated: false
-          }, {
-            createdBy: adminUserId,
-            id: "4",
-            isGenerated: false
-          }],
-          newAppIds = expectedAppIds.map(function (appId) {
-            return appId.id;
-          }),
-          allAppIds = existingAppIds.concat(newAppIds);
+        let pattern = getRegisterPattern(),
+          patternOfDuplicates = getRegisterPattern();
 
-        let end = function (err, res) {
-          if(err) {
-            done(err);
-          } else {
-            validateDuplicateAppIdErrors(res, existingAppIds);
-            compareAppIds(res.body.response, expectedAppIds, done);
+        pattern.ids = ["0", "1", "2", "3", "4"];
+        patternOfDuplicates.ids = ["1", "2", "3"];
+
+        let patternNoDuplicates = JSON.parse(JSON.stringify(pattern));
+
+        // Remove duplicate ids from patternNoDuplicates list.
+        for (let i = 0; i < patternOfDuplicates.ids.length; i++) {
+          let index = patternNoDuplicates.ids.indexOf(patternOfDuplicates.ids[i]);
+          if (index > -1) {
+            patternNoDuplicates.ids.splice(index, 1);
           }
-        };
+        }
 
-        let createAppIdCallback = function (err, res) {
-          if (err) {
-            done(err);
-          } else {
-            app.post('/maids/0/appids/register')
-              .send({ ids: allAppIds })
-              .set("Authorization", adminAccessToken)
-              .expect("Content-Type", /json/)
-              .expect(400)
-              .end(end);
-          }
-        };
+        // Register the first application ID.
+        seneca.act(patternOfDuplicates, function (err, res) {
+          vrRegisterAppIds(err, patternOfDuplicates, res, function (err) {
+            if (err) {
+              done(err);
+            } else {
+              // Attempt to register both application IDs
+              seneca.act(pattern, function (err, res) {
+                if (err) {
+                  return done(err);
+                } else {
+                  let tasks = [];
 
-        app.post('/maids/0/appids/register')
-          .send({ ids: existingAppIds })
-          .set("Authorization", adminAccessToken)
-          .expect("Content-Type", /json/)
-          .expect(200)
-          .end(createAppIdCallback);
+                  tasks.push(next => {
+                    validateResponseStructure(res, next);
+                  });
+
+                  tasks.push(next => {
+                    validateHttpStatusCode(res, (patternOfDuplicates.ids.length > 0) ? 400 : 200, next);
+                  });
+
+                  expect(res.errors).to.be.a('array');
+                  assert(res.errors.length, patternOfDuplicates.ids.length, "Unexpected number of errors.");
+                  for (let i = 0; i < res.errors.length; i++) {
+                    tasks.push(next => {
+                      compareLocaleError(res.errors[i], 'server.400.duplicateAppId', {id: patternOfDuplicates.ids[i]}, 400, next);
+                    });
+                  }
+
+                  tasks.push(next => {
+                    expect(res.data).to.be.a('array');
+                    expect(res.data.length, patternNoDuplicates.ids.length, "Unexpected number of successfully registered AppIds.");
+                    createExpectedAppIds(patternNoDuplicates, next);
+                  });
+
+                  tasks.push((expected, next) => {
+                    compareAppIds(res.data, expected, next);
+                  });
+
+                  async.waterfall(tasks, done);
+                }
+              });
+            }
+          });
+        });
       });
 
     });
