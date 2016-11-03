@@ -9,7 +9,8 @@ dependencies:
     
 test:
   override:
-    - echo "skipping tests"
+    - docker run -d --name pylon smartdevicelink/shaid-pylon:$CIRCLE_TAG
+    - sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" pylon)" -- bash -c "cd /usr/src/app/ && npm test"
 
 deployment:
   hub:
