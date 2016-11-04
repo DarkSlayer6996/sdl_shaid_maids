@@ -41,10 +41,14 @@
     "url": "https://github.com/smartdevicelink/maids.git"
   },
   "scripts": {
+    "docker-build": "docker build --rm=false -t smartdevicelink/shaid-maids .",
+    "docker-start": "docker rm maids && docker run --name maids -e \"NODE_ENV=test-circleci\" smartdevicelink/shaid-maids",
+    "docker-stop": "docker stop maids",
     "start": "NODE_ENV=development node index.js",
     "start:staging": "NODE_ENV=staging node index.js",
     "start:production": "NODE_ENV=production node index",
     "test": "NODE_ENV=test mocha",
+    "test-circleci": "NODE_ENV=test-circleci mocha",
     "test-travis": "NODE_ENV=test-travis istanbul cover -x '**_test.js' -x '**/test.js' ./node_modules/mocha/bin/_mocha --report lcovonly -- -R spec"
   },
   "dependencies": {
