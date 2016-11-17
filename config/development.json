@@ -1,4 +1,10 @@
 {
+  "cassandra": {
+    "authentication": true,           // Require authentication, but use the default username and password to connect.
+    "username": "INVALID-USERNAME",   // Cassandra username, override with DB_USERNAME environment variable.
+    "password": "INVALID-PASSWORD"    // Cassandra password, override with DB_PASSWORD environment variable.
+  },
+
   "server" : {                      // Settings for the Node server.
     "domainName": "localhost",      // Domain name used to reach the server.  (e.g. my.website.com)
     "port": 3000,                   // Port the server will be listening on.

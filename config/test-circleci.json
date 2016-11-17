@@ -1,7 +1,11 @@
 {
   "cassandra": {                        // Configure the cassandra client.  See http://goo.gl/OwXliW for more info.
+    "authentication": {                 // Configure the authentication credentials to connect to the database.
+      "username": "admin",              // Cassandra username, override with DB_USERNAME environment variable.
+      "password": "INVALID-PASSWORD"    // Cassandra password, override with DB_PASSWORD environment variable.
+    },
     "dropKeyspaceOnInit": true,         // When true, the keyspace(s) will be cleared on every initialization.  Resulting in an empty database on every server restart.
-    "contactPoints": ["52.90.147.39"],  // Array of addresses or host names of the nodes to add as contact points.
+    "contactPoints": ["ec2-52-91-113-192.compute-1.amazonaws.com"],  // Array of addresses or host names of the nodes to add as contact points.
     "durableWrites": true,              // When set to false, data written to the keyspace bypasses the commit log.  Be careful using this option because you risk losing data.  Must be true when using replication class "SimpleStrategy".
     "keyspace": "sdl_shaid_maids_test_circleci", // Name of the top-level namespace used by the application.  Similar to a database name.
     "replication": {                    // Configure cassandra replication for the keyspace specified, see https://docs.datastax.com/en/cql/3.1/cql/cql_reference/create_keyspace_r.html

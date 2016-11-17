@@ -17,6 +17,13 @@ class Cqlsh {
     let cassandraConfig = JSON.parse(JSON.stringify(self.config.get('cassandra')));
     delete cassandraConfig.keyspace;
 
+    if(cassandraConfig.authentication) {
+      let username = process.env.DB_USERNAME || ((cassandraConfig.authentication["username"]) ? cassandraConfig.authentication["username"] : "cassandra"),
+        password = process.env.DB_PASSWORD || ((cassandraConfig.authentication["password"]) ? cassandraConfig.authentication["password"] : "cassandra");
+      cassandraConfig.authProvider = new cassandra.auth.PlainTextAuthProvider(username, password);
+      delete cassandraConfig.authentication;
+    }
+
     self.db = new cassandra.Client(cassandraConfig);
 
     tasks.push(function (next) {
