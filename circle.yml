@@ -10,7 +10,7 @@ dependencies:
 test:
   override:
     - docker run -d --name maids -e "NODE_ENV=test-circleci" smartdevicelink/shaid-maids:$CIRCLE_TAG
-    - sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" maids)" -- bash -c "cd /usr/src/app/ && npm run-script test-circleci"
+    - sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" maids)" -- bash -c "cd /usr/src/app/ && DB_PASSWORD=$CASSANDRA_DB_PASSWORD NODE_ENV=test-circleci mocha"
 
 deployment:
   hub:
