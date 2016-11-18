@@ -13,5 +13,6 @@ COPY . /usr/src/app/
 RUN chmod +x scripts/wait-for-it.sh
 
 EXPOSE 10101
+EXPOSE 9042
 
 CMD ["node", "index.js"]
