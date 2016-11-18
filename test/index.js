@@ -10,6 +10,8 @@ if(process.env.DB_PASSWORD === "INVALID-PASSWORD") {
   console.log("WARNING:  DB_PASSWORD environment variable was not set.");
 }
 
+// Check if already running?
+
 let assert = require('assert'),
   config = require('config'),
   crave = require("crave"),

@@ -14,4 +14,4 @@ RUN chmod +x scripts/wait-for-it.sh
 
 EXPOSE 10101
 
-CMD ["node", "index.js"]
+CMD ["npm", "run-script", "test-circleci"]

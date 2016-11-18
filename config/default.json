@@ -69,7 +69,8 @@
   "seneca": {
     "host": "localhost",
     "type": "http",
-    "pin": "service:maids"
+    "pin": "service:maids",
+    "timeout": 10000
   },
 
   "server": {                      // Settings for the Node server.
