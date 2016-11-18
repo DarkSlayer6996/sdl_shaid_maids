@@ -6,6 +6,10 @@ if(process.env.NODE_ENV === "development" || process.env.NODE_ENV === "productio
   process.env.NODE_ENV = "test";
 }
 
+if(process.env.DB_PASSWORD === "INVALID-PASSWORD") {
+  console.log("WARNING:  DB_PASSWORD environment variable was not set.");
+}
+
 let assert = require('assert'),
   config = require('config'),
   crave = require("crave"),

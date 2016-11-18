@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
 
-docker run -d --name maids -e "NODE_ENV=test-circleci" smartdevicelink/shaid-maids:$CIRCLE_TAG
-runTestCmd="cd /usr/src/app/ && DB_PASSWORD=$CASSANDRA_DB_PASSWORD NODE_ENV=test-circleci npm test"
-sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" maids)" -- bash -c "$runTestCmd"
+docker run -d --name maids -e "DB_PASSWORD=$CASSANDRA_DB_PASSWORD" smartdevicelink/shaid-maids:$CIRCLE_TAG
+sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" maids)" -- bash -c "cd /usr/src/app/ && npm run-script test-circleci"
