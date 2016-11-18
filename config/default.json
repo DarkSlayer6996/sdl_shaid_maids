@@ -67,7 +67,9 @@
   },
 
   "seneca": {
-
+    "host": "localhost",
+    "type": "http",
+    "pin": "service:maids"
   },
 
   "server": {                      // Settings for the Node server.

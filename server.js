@@ -477,9 +477,14 @@ class Server {
   // Start express server and listen on configured port
   startExpressServer(cb) {
     let self = this,
-      port = process.env.PORT || config.get('server.port');
+      port = process.env.PORT || config.get('server.port'),
+      senecaConfig = config.get('seneca');
 
-    self.seneca.listen({ host: process.env.MAIDS_HOST || 'localhost', type: 'http', pin: 'service:maids' });
+    if(process.env.MAIDS_HOST) {
+      senecaConfig["host"] = process.env.MAIDS_HOST;
+    }
+
+    self.seneca.listen(senecaConfig);
 
     self.seneca.ready(cb);
     /*
