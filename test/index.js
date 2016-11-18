@@ -1,3 +1,11 @@
+// Don't let stupid things happen, like destroying the production or staging database.
+if(process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production") {
+  console.log("Warning:  Attempting to run unit tests with NODE_ENV as development or production is a bad idea.  Changing the NODE_ENV to test.");
+  process.env.NODE_ENV = "test";
+} else if( ! process.env.NODE_ENV) {
+  process.env.NODE_ENV = "test";
+}
+
 let assert = require('assert'),
   config = require('config'),
   crave = require("crave"),
