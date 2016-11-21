@@ -21,7 +21,6 @@
 
   "seneca": {
     "host": false,
-    "pin": "service:maidstest",
     "port": 3001
   },
 
