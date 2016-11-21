@@ -48,6 +48,25 @@ let createClassAsyncMethod = function (self, methodName) {
   }
 };
 
+let getHostIpAddress = function (cb) {
+  let os = require('os'),
+    networkInterfaces = os.networkInterfaces(),
+    ipAddresses = [];
+
+  // Loop through the list of network interfaces.
+  Object.keys(networkInterfaces).forEach(function (key) {
+    // Loop through each address for the network interface.
+    networkInterfaces[key].forEach(function(networkInterface) {
+      // Looking for external IPv4 addresses.
+      if('IPv4' === networkInterface.family && networkInterface.internal === false) {
+        ipAddresses.push(networkInterface.address);
+      }
+    });
+  });
+
+  cb(undefined, ipAddresses[0]);
+};
+
 
 /* ************************************************** *
  * ******************** Node Server Class
@@ -478,24 +497,42 @@ class Server {
   startExpressServer(cb) {
     let self = this,
       port = process.env.PORT || config.get('server.port'),
-      senecaConfig = config.get('seneca');
+      senecaConfig = JSON.parse(JSON.stringify(config.get('seneca')));
 
-    if(process.env.MAIDS_HOST) {
+    if (process.env.MAIDS_HOST) {
       senecaConfig["host"] = process.env.MAIDS_HOST;
     }
 
-    self.seneca.listen(senecaConfig);
+    if( ! senecaConfig["host"]) {
+      getHostIpAddress(function (err, ipAddress) {
+        if(err) {
+          cb(err);
+        } else {
+          if(ipAddress) {
+            senecaConfig["host"] = ipAddress;
+          } else {
+            senecaConfig["host"] = "localhost";
+          }
 
-    self.seneca.ready(cb);
+          console.log("Listening with seneca config:", JSON.stringify(senecaConfig, undefined, 2));
+          self.seneca.listen(senecaConfig);
+          self.seneca.ready(cb);
+        }
+      });
+    } else {
+      self.seneca.listen(senecaConfig);
+      self.seneca.ready(cb);
+    }
+
     /*
-    self.server = self.app.listen(port, function () {
-      let serverInfo = this.address();
-      let address = (serverInfo.address === "0.0.0.0" || serverInfo.address === "::") ? "localhost" : serverInfo.address;
+     self.server = self.app.listen(port, function () {
+     let serverInfo = this.address();
+     let address = (serverInfo.address === "0.0.0.0" || serverInfo.address === "::") ? "localhost" : serverInfo.address;
 
-      self.log.info("Listening on http://%s:%s with the %s config.", address, serverInfo.port, process.env.NODE_ENV || "default");
-      cb();
-    });
-*/
+     self.log.info("Listening on http://%s:%s with the %s config.", address, serverInfo.port, process.env.NODE_ENV || "default");
+     cb();
+     });
+     */
   }
 
 }

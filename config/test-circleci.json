@@ -20,6 +20,7 @@
   },
 
   "seneca": {
+    "host": false,
     "pin": "service:maidstest"
   },
 

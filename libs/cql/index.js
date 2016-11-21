@@ -23,7 +23,6 @@ class Cqlsh {
       cassandraConfig.authProvider = new cassandra.auth.PlainTextAuthProvider(username, password);
       delete cassandraConfig.authentication;
     }
-
     self.db = new cassandra.Client(cassandraConfig);
 
     tasks.push(function (next) {
