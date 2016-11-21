@@ -21,7 +21,8 @@
 
   "seneca": {
     "host": false,
-    "pin": "service:maidstest"
+    "pin": "service:maidstest",
+    "port": 3001
   },
 
   "server" : {                          // Settings for the Node server.

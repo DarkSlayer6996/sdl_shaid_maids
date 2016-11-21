@@ -12,6 +12,6 @@ COPY . /usr/src/app/
 
 RUN chmod +x scripts/wait-for-it.sh
 
-EXPOSE 10101
+EXPOSE 3001
 
 CMD ["npm", "run-script", "test-circleci"]

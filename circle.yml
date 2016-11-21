@@ -5,7 +5,7 @@ machine:
 dependencies:
   override:
     - docker info
-    - docker build --rm=false -f Dockerfile-Test -t smartdevicelink/shaid-maids:$CIRCLE_TAG .
+    - docker build --rm=false -f Dockerfile-Test -t smartdevicelink/shaid-maids:123456789 .
     
 test:
   override:
