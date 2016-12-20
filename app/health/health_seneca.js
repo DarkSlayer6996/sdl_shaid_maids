@@ -6,6 +6,7 @@ module.exports = function(server) {
     express = require('express'),
     i18next = server.i18next,
     log = server.log,
+    npmConfig = server.npmConfig,
     riposte = server.riposte,
     seneca = server.seneca;
 
@@ -16,64 +17,24 @@ module.exports = function(server) {
    * ******************** API Routes and Permissions
    * ************************************************** */
 
-  seneca.add('service:maids,model:health,method:find', function (msg, cb) {
-    let reply = riposte.createReply({ id: msg.id });
-    reply.setData({ "status": 200 });
+  seneca.add('service:maids,model:health,method:status', function (msg, cb) {
+    riposte.createReply({ id: msg.id }).addAndSend(undefined, { "status": 200 }, cb);
+  });
 
-    respond(undefined, reply, cb);
+  seneca.add('service:maids,model:health,method:version', function (msg, cb) {
+    riposte.createReply({ id: msg.id }).addAndSend(undefined, { "version": npmConfig.version }, cb);
   });
 
   seneca.wrap('service:maids,model:health', function (msg, cb) {
     log.info('[%s] ACT service: maids, model: appids\nMessage:%s', msg.id, JSON.stringify(msg, undefined, 2));
 
     if( ! msg.access_token || msg.access_token !== API_TOKEN_MAIDS) {
-      let err = new Error(i18next.t('server.400.unauthorized'));  //TODO: Convert to Rich Error.
-      err.status = 401;
-      respond(err, msg.id, cb);
+      let err = remie.create("server.400.unauthorized");
+      riposte.createReply({ id: msg.id }).addErrorsAndSend(err, cb);
     } else {
       delete msg.access_token;
       this.prior(msg, cb);
     }
   });
-
-  /* ************************************************** *
-   * ******************** Route Methods
-   * ************************************************** */
-
-  function respond(err, reply, cb) {
-    let tasks = [];
-
-    if(typeof reply === 'string') {
-      reply = riposte.createReply({ id: reply });
-    }
-
-    tasks.push((next) => {
-      if(err) {
-        reply.addErrors(err, function (err) {
-          if (err) {
-            next(err);
-          } else {
-            next(undefined, reply);
-          }
-        });
-      } else {
-        next(undefined, reply);
-      }
-    });
-
-    tasks.push((reply, next) => {
-      reply.toObject(undefined, next);
-    });
-
-    async.waterfall(tasks, function(err, obj) {
-      if(err) {
-        log.error(err);
-      }
-      if(obj) {
-        log.info('[%s] Reply with Status Code: %s\nBody: %s', obj.id, obj.status, JSON.stringify(obj, undefined, 2));
-      }
-      cb(null, obj);
-    });
-  }
 
 };

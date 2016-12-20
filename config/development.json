@@ -1,8 +1,17 @@
 {
-  "cassandra": {
-    "authentication": true,           // Require authentication, but use the default username and password to connect.
-    "username": "INVALID-USERNAME",   // Cassandra username, override with DB_USERNAME environment variable.
-    "password": "INVALID-PASSWORD"    // Cassandra password, override with DB_PASSWORD environment variable.
+  "cassandra": {                        // Configure the cassandra client.  See http://goo.gl/OwXliW for more info.
+    //"authentication": {                 // Configure the authentication credentials to connect to the database.
+    //  "username": "admin",              // Cassandra username, override with DB_USERNAME environment variable.
+    //  "password": "INVALID-PASSWORD"    // Cassandra password, override with DB_PASSWORD environment variable.
+    //},
+    "dropKeyspaceOnInit": false,        // When true, the keyspace(s) will be cleared on every initialization.  Resulting in an empty database on every server restart.
+    "contactPoints": ["localhost"],     // Array of addresses or host names of the Cassandra nodes to add as contact points.
+    "durableWrites": true,              // When set to false, data written to the keyspace bypasses the commit log.  Be careful using this option because you risk losing data.  Must be true when using replication class "SimpleStrategy".
+    "keyspace": "shaid_maids_dev",      // Name of the top-level namespace used by the application.  Similar to a database name.
+    "replication": {                    // Configure cassandra replication for the keyspace specified, see https://goo.gl/zFFJiv
+      "class": "SimpleStrategy",        // Required. The name of the replica placement strategy class for the new keyspace.
+      "replication_factor": 1           // Required if class is SimpleStrategy; otherwise, not used. The number of replicas of data on multiple nodes.
+    }
   },
 
   "server" : {                      // Settings for the Node server.

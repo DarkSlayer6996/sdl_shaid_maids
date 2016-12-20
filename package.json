@@ -1,6 +1,6 @@
 {
   "name": "shaid-maids",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": "Livio",
   "bugs": {
     "url": "https://github.com/smartdevicelink/maids.git"
@@ -17,7 +17,7 @@
   ],
   "description": "Micro service for generating or registering SDL application IDs.",
   "engines": {
-    "node": "6.9.1"
+    "node": "6.9.2"
   },
   "homepage": "https://smartdevicelink.com/en/docs/shaid",
   "keywords": [
@@ -41,10 +41,13 @@
     "url": "https://github.com/smartdevicelink/maids.git"
   },
   "scripts": {
-    "docker-build": "docker build --rm=false -t smartdevicelink/shaid-maids .",
-    "docker-start": "docker rm maids && docker run --name maids -e \"NODE_ENV=test-circleci\" smartdevicelink/shaid-maids",
-    "docker-stop": "docker stop maids",
-    "start": "NODE_ENV=development node index.js",
+    "docker:bash": "docker run -it -e NODE_ENV=development --entrypoint /bin/bash shaid-maids",
+    "docker:build": "docker build -t shaid-maids .",
+    "docker:logs": "docker logs `docker ps | grep shaid-maids | awk '{print $1;}'`",
+    "docker:publish": "image=$(cat package.json | grep version | head -1 | awk -F: '{print$2}' | sed 's/[\",]//g' | tr -d '[[:space:]]' ) && docker tag shaid-maids:latest 454288067564.dkr.ecr.us-east-1.amazonaws.com/shaid-maids:$image && docker push 454288067564.dkr.ecr.us-east-1.amazonaws.com/shaid-maids:$image",
+    "docker:start": "docker run -e NODE_ENV=development -p 3000:3000 -d shaid-maids",
+    "docker:stop": "docker stop `docker ps | grep shaid-maids | awk '{print $1;}'`",
+    "start": "node index.js",
     "start:staging": "NODE_ENV=staging node index.js",
     "start:production": "NODE_ENV=production node index",
     "test": "mocha",

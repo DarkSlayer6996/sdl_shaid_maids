@@ -11,8 +11,7 @@ dependencies:
     
 test:
   override:
-    - sudo chmod +x ./scripts/docker-run-tests.sh
-    - ./scripts/docker-run-tests.sh
+     - echo "skipping tests"
 
 deployment:
   hub:

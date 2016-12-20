@@ -1,0 +1,37 @@
+{ 
+  "cassandra": {                        // Configure the cassandra client.  See http://goo.gl/OwXliW for more info.
+    "authentication": {                 // Configure the authentication credentials to connect to the database.
+      "username": "admin",              // Cassandra username, override with DB_USERNAME environment variable.
+      "password": "INVALID-PASSWORD"    // Cassandra password, override with DB_PASSWORD environment variable.
+    },
+    "dropKeyspaceOnInit": true,         // When true, the keyspace(s) will be cleared on every initialization.  Resulting in an empty database on every server restart.
+    "contactPoints": ["ec2-52-91-113-192.compute-1.amazonaws.com"],  // Array of addresses or host names of the nodes to add as contact points.
+    "durableWrites": true,              // When set to false, data written to the keyspace bypasses the commit log.  Be careful using this option because you risk losing data.  Must be true when using replication class "SimpleStrategy".
+    "keyspace": "sdl_shaid_maids_test_docker", // Name of the top-level namespace used by the application.  Similar to a database name.
+    "replication": {                    // Configure cassandra replication for the keyspace specified, see https://docs.datastax.com/en/cql/3.1/cql/cql_reference/create_keyspace_r.html
+      "class": "SimpleStrategy",        // Required. The name of the replica placement strategy class for the new keyspace.
+      "replication_factor": 1           // Required if class is SimpleStrategy; otherwise, not used. The number of replicas of data on multiple nodes.
+    }
+  },
+
+  "log" : {                             // Configure the local log module.
+    "consoleLogLevel": "trace",         // Configure the bunyan log level: https://github.com/trentm/node-bunyan#levels
+    "requests": true                    // Enable trace logging of all requests the server receives.
+  },
+
+  "seneca": {
+    "host": false,
+    "port": 3001
+  },
+
+  "server" : {                          // Settings for the Node server.
+    "domainName": "localhost",          // Domain name used to reach the server.  (e.g. my.website.com)
+    "port": 3000,                       // Port the server will be listening on.
+    "protocol": "http"                  // Protocol used to reach the server. (e.g. http or https)
+  },
+
+  "test": {                             // Special configurations used for testing the server.
+    "canSetAppIdsInCreateAppIds": true, // When true, the request can include specific application IDs to count as generated.
+    "canSetRetriesInCreateAppIds": true // When true, the request can include how many retry attempts to use when generating application IDs.
+  }
+}

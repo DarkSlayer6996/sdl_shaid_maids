@@ -1,0 +1,19 @@
+version: "2"
+services:
+  maids:
+    image: shaid-maids:latest
+    depends_on:
+      - db 
+    links:
+      - db
+    entrypoint: scripts/wait-for-it.sh db:9160 -- node index.js
+    env_file:
+      - ./common.env
+    expose:
+      - "3000"
+  db:
+    image: abh1nav/cassandra:latest
+    expose: 
+      - "9042"
+    volumes:
+      - /var/lib/cassandra
