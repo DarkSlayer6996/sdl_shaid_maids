@@ -114,7 +114,7 @@ class Server {
       if(err) {
         self.log.error(err);
       } else {
-        self.log.info("Seneca listening with %s config.", NODE_ENV);
+        self.log.info("Seneca listening with %s config.", process.env.NODE_ENV);
         self.emit('ready', self.seneca);
       }
     });
