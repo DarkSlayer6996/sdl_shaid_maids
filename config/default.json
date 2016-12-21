@@ -66,10 +66,11 @@
     "enableStackTrace": true        // When true, errors returned from the server will include a stack trace.
   },
 
-  "seneca": {
+   "seneca": {
     "host": "localhost",
     "type": "http",
     "pin": "service:maids",
+    "port": 5002,
     "timeout": 10000
   },
 
