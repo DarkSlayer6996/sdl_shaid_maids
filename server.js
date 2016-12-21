@@ -521,6 +521,7 @@ class Server {
         }
       });
     } else {
+      console.log("Seneca config:", JSON.stringify(senecaConfig, undefined, 2));
       self.seneca.listen(senecaConfig);
       self.seneca.ready(cb);
     }
