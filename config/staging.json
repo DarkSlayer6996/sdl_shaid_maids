@@ -46,6 +46,14 @@
     "enableStackTrace": false       // When true, errors returned from the server will include a stack trace.
   },
 
+  "seneca": {
+   "host": "maids",
+   "type": "http",
+   "pin": "service:maids",
+   "port": 5002,
+   "timeout": 10000
+ },
+
   "server" : {                      // Settings for the Node server.
     "AllowCors": false,             // When true, allow Cross-Origin Resource Sharing (CORS).
     "domainName": "localhost",      // Domain name used to reach the server.  (e.g. my.website.com)
