@@ -13,8 +13,6 @@ module.exports = function(server) {
   let assert = chai.assert,
     expect = chai.expect;
 
-  const API_TOKEN_MAIDS = process.env.API_TOKEN_MAIDS || config.get('apiTokens.maids');
-
   let adminUserId = "1";
 
 
@@ -23,7 +21,7 @@ module.exports = function(server) {
    * ************************************************** */
 
   const PATTERN_REGISTER_V0 = {
-    access_token: API_TOKEN_MAIDS,
+    access_token: config.apiTokens.maids,
     id: "1",
     ids: [],
     method: "register",
@@ -34,7 +32,7 @@ module.exports = function(server) {
   };
 
   const PATTERN_CREATE_V0 = {
-    access_token: API_TOKEN_MAIDS,
+    access_token: config.apiTokens.maids,
     id: "1",
     method: "create",
     model: "appids",
@@ -57,7 +55,7 @@ module.exports = function(server) {
         return JSON.parse(JSON.stringify(PATTERN_CREATE_V0));
     }
   };
-  
+
 
   /* ************************************************** *
    * ******************** Private Helper Methods
@@ -315,7 +313,7 @@ module.exports = function(server) {
 
     assert(res.errors.length, 1, "Unexpected number of errors returned");
     tasks.push(next => {
-      compareLocaleError(res.errors[0], 'server.400.maxNumOfIdsInRegisterExceeded', { numOfIds: (pattern.numOfIds) ? pattern.numOfIds : pattern.ids.length, maxNumOfIds: config.get('appIds.maxNumOfIdsInRegister') }, 400, next);
+      compareLocaleError(res.errors[0], 'server.400.maxNumOfIdsInRegisterExceeded', { numOfIds: (pattern.numOfIds) ? pattern.numOfIds : pattern.ids.length, maxNumOfIds: config.appIds.maxNumOfIdsInRegister }, 400, next);
     });
 
     async.series(tasks, cb);
@@ -339,7 +337,7 @@ module.exports = function(server) {
 
     assert(res.errors.length, 1, "Unexpected number of errors returned");
     tasks.push(next => {
-      compareLocaleError(res.errors[0], 'server.400.maxNumOfIdsInRegisterExceeded', { numOfIds: pattern.ids.length, maxNumOfIds: config.get('appIds.maxNumOfIdsInRegister') }, 400, next);
+      compareLocaleError(res.errors[0], 'server.400.maxNumOfIdsInRegisterExceeded', { numOfIds: pattern.ids.length, maxNumOfIds: config.appIds.maxNumOfIdsInRegister }, 400, next);
     });
 
     async.series(tasks, cb);
@@ -394,7 +392,7 @@ module.exports = function(server) {
       it("if the single application ID doesn't already exist", function (done) {
         let pattern = getRegisterPattern();
         pattern.ids = [ "1" ];
-        
+
         seneca.act(pattern, function (err, res) {
           vrRegisterAppIds(err, pattern, res, done);
         });
@@ -476,7 +474,7 @@ module.exports = function(server) {
 
       it("if the number of IDs is too large", function (done) {
         let pattern = getRegisterPattern(),
-          maxNumOfIds = config.get('appIds.maxNumOfIdsInRegister');
+          maxNumOfIds = config.appIds.maxNumOfIdsInRegister;
 
         for(let i = 0; i <= maxNumOfIds; i++) {
           pattern.ids.push(i.toString());
@@ -766,7 +764,7 @@ module.exports = function(server) {
 
       it("if the number of IDs to be created is too large", function (done) {
         let pattern = getCreatePattern(),
-          maxNumOfIds = config.get('appIds.maxNumOfIdsInCreate');
+          maxNumOfIds = config.appIds.maxNumOfIdsInCreate;
         pattern.numOfIds = maxNumOfIds+1;
 
         seneca.act(pattern, function (err, res) {

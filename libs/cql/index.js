@@ -14,7 +14,7 @@ class Cqlsh {
     let self = this,
       tasks = [];
 
-    let cassandraConfig = JSON.parse(JSON.stringify(self.config.get('cassandra')));
+    let cassandraConfig = JSON.parse(JSON.stringify(self.config.cassandra));
     delete cassandraConfig.keyspace;
 
     if(cassandraConfig.authentication) {
@@ -29,14 +29,14 @@ class Cqlsh {
       self.connect(next);
     });
 
-    if(self.config.has('cassandra.dropKeyspaceOnInit') && self.config.get('cassandra.dropKeyspaceOnInit') === true) {
+    if(self.config.cassandra.dropKeyspaceOnInit === true) {
       tasks.push(function (next) {
-        self.dropKeyspace(self.config.get('cassandra.keyspace'), next);
+        self.dropKeyspace(self.config.cassandra.keyspace, next);
       });
     }
 
     tasks.push(function(next) {
-      self.createKeyspace(self.config.get('cassandra.keyspace'), self.config.get('cassandra'), next);
+      self.createKeyspace(self.config.cassandra.keyspace, self.config.cassandra, next);
     });
 
 
@@ -53,7 +53,7 @@ class Cqlsh {
         if (err) {
           self.db.shutdown();
           self.log.error(err);
-        
+
           // Failed. Trying backing off
           fibonacciBackoff.backoff(err);
         } else {
@@ -102,7 +102,7 @@ class Cqlsh {
     let cql = "CREATE KEYSPACE IF NOT EXISTS " + keyspace +
       " WITH REPLICATION = " + JSON.stringify(options.replication);
 
-    if(self.config.has('cassandra.durableWrite')) {
+    if(options.durableWrite !== undefined) {
       cql += " AND DURABLE_WRITE = " + options.durableWrite;
     }
     cql += ";";
@@ -120,7 +120,7 @@ class Cqlsh {
       }
     });
   }
-  
+
   dropKeyspace(keyspace, cb) {
     let self = this;
 
@@ -145,7 +145,7 @@ class Cqlsh {
 
   createTable(tableName, columns, cb, keyspace) {
     let self = this;
-    keyspace = (keyspace) || self.config.get('cassandra.keyspace');
+    keyspace = (keyspace) || self.config.cassandra.keyspace;
 
     let columnsCql = "(" + columns.join(',') + ")";
 
@@ -169,7 +169,7 @@ class Cqlsh {
 
   dropTable(tableName, cb, keyspace) {
     let self = this;
-    keyspace = (keyspace) || self.config.get('cassandra.keyspace');
+    keyspace = (keyspace) || self.config.cassandra.keyspace;
 
     let cql = "DROP TABLE "+keyspace+"."+tableName+";";
     self.db.execute(cql, function(err, resultSet) {
@@ -191,7 +191,7 @@ class Cqlsh {
 
   truncateTable(tableName, cb, keyspace) {
     let self = this;
-    keyspace = (keyspace) || self.config.get('cassandra.keyspace');
+    keyspace = (keyspace) || self.config.cassandra.keyspace;
 
     let cql = "TRUNCATE "+keyspace+"."+tableName+";";
     self.db.execute(cql, function(err, resultSet) {
@@ -209,7 +209,7 @@ class Cqlsh {
       crave = require('crave'),
       models = {};
 
-    crave.setConfig(self.config.get('crave'));
+    crave.setConfig(self.config.crave);
 
     let craveCb = function(err, filesRequired, modelObjects) {
       if(err) {
@@ -250,7 +250,7 @@ class Cqlsh {
       crave = require('crave'),
       models = {};
 
-    crave.setConfig(self.config.get('crave'));
+    crave.setConfig(self.config.crave);
 
     let craveCb = function(err, filesRequired, modelObjects) {
       if(err) {
@@ -291,7 +291,7 @@ class Cqlsh {
       crave = require('crave'),
       models = {};
 
-    crave.setConfig(self.config.get('crave'));
+    crave.setConfig(self.config.crave);
 
     let craveCb = function(err, filesRequired, modelObjects) {
       if(err) {
@@ -326,7 +326,7 @@ class Cqlsh {
     // Recursively load all files of the specified type(s) that are also located in the specified folder.
     crave.directory(path.resolve("./app"), ["model"], craveCb, self.server);
   }
-  
+
 }
 
 module.exports = Cqlsh;

@@ -15,12 +15,10 @@ module.exports = function(server) {
    * ******************** Static Variables
    * ************************************************** */
 
-  const KEYSPACE = config.get('cassandra.keyspace');
-  const QUERY_INSERT_APP_ID = 'INSERT INTO '+KEYSPACE+'.appids (id, createdBy, createdOn, isGenerated ) VALUES (?,?,?,?) IF NOT EXISTS';
+  const QUERY_INSERT_APP_ID = 'INSERT INTO '+config.cassandra.keyspace+'.appids (id, createdBy, createdOn, isGenerated ) VALUES (?,?,?,?) IF NOT EXISTS';
   const QUERY_OPTIONS_PREPARED = { prepare: true };
   const QUERY_OPTIONS_BATCH_PREPARED_QUORUM = { prepare: true, consistency: cassandra.types.consistencies.quorum };
-  const QUERY_EXISTS_APP_ID = 'SELECT id FROM '+KEYSPACE+'.appids WHERE id = ?';
-  const APP_IDS_MAX_GEN_RETRY = (config.has('appIds.maxGenRetry')) ? config.get('appIds.maxGenRetry') : 5;
+  const QUERY_EXISTS_APP_ID = 'SELECT id FROM '+config.cassandra.keyspace+'.appids WHERE id = ?';
 
 
   /* ************************************************** *
@@ -70,7 +68,7 @@ module.exports = function(server) {
     }
   };
 
-  let insertAppId = function(appId, cb, retries = APP_IDS_MAX_GEN_RETRY) {
+  let insertAppId = function(appId, cb, retries = config.appIds.maxGenRetry) {
     if( ! appId) {
       cb(remie.createInternal("insertAppId(): AppId is undefined, taking no action."));
     } else {
@@ -155,7 +153,7 @@ module.exports = function(server) {
     generateNewId() {
       this.columns.id = uuid.v4();
     }
-    
+
     toObject() {
       return this.columns;
     }
@@ -168,7 +166,7 @@ module.exports = function(server) {
 
   class AppIdModel {
     constructor() {
-      this.keyspace = KEYSPACE;
+      this.keyspace = config.cassandra.keyspace;
       this.tableName = "appids";
     }
 
@@ -197,7 +195,7 @@ module.exports = function(server) {
 
       cql.createTable(this.getTableName(), columns, cb);
     }
-    
+
     dropTable(cb) {
       cql.dropTable(this.getTableName(), cb);
     }
@@ -275,7 +273,7 @@ module.exports = function(server) {
       }
     }
   }
-  
+
 
   return new AppIdModel();
 };

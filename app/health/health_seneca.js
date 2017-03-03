@@ -10,8 +10,6 @@ module.exports = function(server) {
     riposte = server.riposte,
     seneca = server.seneca;
 
-  const API_TOKEN_MAIDS = process.env.API_TOKEN_MAIDS || config.get('apiTokens.maids');
-
 
   /* ************************************************** *
    * ******************** API Routes and Permissions
@@ -28,7 +26,7 @@ module.exports = function(server) {
   seneca.wrap('service:maids,model:health', function (msg, cb) {
     log.info('[%s] ACT service: maids, model: appids\nMessage:%s', msg.id, JSON.stringify(msg, undefined, 2));
 
-    if( ! msg.access_token || msg.access_token !== API_TOKEN_MAIDS) {
+    if( ! msg.access_token || msg.access_token !== config.apiTokens.maids) {
       let err = remie.create("server.400.unauthorized");
       riposte.createReply({ id: msg.id }).addErrorsAndSend(err, cb);
     } else {
