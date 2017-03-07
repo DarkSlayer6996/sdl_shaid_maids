@@ -75,7 +75,7 @@
     "i18next-sprintf-postprocessor": "0.2.2",
     "lodash": "4.16.6",
     "remie": "0.1.5",
-    "riposte": "0.1.4",
+    "riposte": "0.1.5",
     "seneca": "3.2.2"
   },
   "devDependencies": {
