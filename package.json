@@ -1,19 +1,11 @@
 {
   "name": "shaid-maids",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "author": "Livio",
   "bugs": {
     "url": "https://github.com/smartdevicelink/maids.git"
   },
   "contributors": [
-    {
-      "name": "Corey Maylone",
-      "email": "corey@livio.io"
-    },
-    {
-      "name": "Scott Smereka",
-      "email": "scott@livio.io"
-    },
     {
       "name": "Nick Schwab",
       "email": "nick.schwab@livio.io"
