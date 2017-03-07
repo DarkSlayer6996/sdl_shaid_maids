@@ -9,6 +9,14 @@
     {
       "name": "Nick Schwab",
       "email": "nick.schwab@livio.io"
+    },
+    {
+      "name": "Corey Maylone",
+      "email": "corey@livio.io"
+    },
+    {
+      "name": "Scott Smereka",
+      "email": "scott@livio.io"
     }
   ],
   "description": "Micro service for generating or registering SDL application IDs.",
