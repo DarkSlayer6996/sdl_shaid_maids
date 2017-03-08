@@ -60,20 +60,6 @@ var getType = function(v) {
 };
 
 
-let getSetting = function(config, pattern, defaultValue) {
-  if(config && config.has(pattern)) {
-    return config.get(pattern);
-  } else {
-    return defaultValue;
-  }
-};
-
-let isSettingTrue = function(config, pattern) {
-  let setting = getSetting(config, pattern, false);
-  return (setting === true);
-};
-
-
 let createApiResponse = function(apiResponseObject, cb) {
   let data = apiResponseObject.data,
     errors = apiResponseObject.errors,
@@ -163,10 +149,10 @@ class ApiResponse {
     this.RichError = obj.RichError;
     this.log = obj.log;
 
-    this.logAllResponses = isSettingTrue(this.config, 'log.logAllResponses');
+    this.logAllResponses = this.config.log.logAllResponses;
     this.richErrorResponseOptions = {
       error: {
-        stack: isSettingTrue(this.config, 'richError.enableStackTrace')
+        stack: this.config.richError.enableStackTrace
       }
     }
   }
@@ -254,7 +240,7 @@ class ApiResponse {
           responseObject.errors.push(convertToRichError(self.RichError, errs));
         }
       }
-      
+
       next(undefined, responseObject);
     });
 

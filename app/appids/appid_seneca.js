@@ -9,12 +9,8 @@ module.exports = function(server) {
     seneca = server.seneca,
     _ = require('lodash');
 
-  const CAN_SET_APP_IDS_IN_CREATE_APP_IDS = (config.has('test.canSetAppIdsInCreateAppIds') && config.get('test.canSetAppIdsInCreateAppIds') === true) ? true : false,
-    CAN_SET_RETRIES_IN_CREATE_APP_IDS = (config.has('test.canSetRetriesInCreateAppIds') && config.get('test.canSetRetriesInCreateAppIds') === true) ? true : false,
-    PATTERN_BASE = 'service:maids,model:appids,method:';
+  const PATTERN_BASE = 'service:maids,model:appids,method:';
 
-  const API_TOKEN_MAIDS = process.env.API_TOKEN_MAIDS || config.get('apiTokens.maids');
-  
   /* ************************************************** *
    * ******************** API Routes and Permissions
    * ************************************************** */
@@ -22,7 +18,7 @@ module.exports = function(server) {
   seneca.add(PATTERN_BASE+'register', function (msg, cb) {
     let createdBy = msg.user.id,
       ids = msg.ids,
-      maxNumOfIds = config.get('appIds.maxNumOfIdsInRegister');
+      maxNumOfIds = config.appIds.maxNumOfIdsInRegister;
 
     if( ! ids || ! _.isArray(ids) || ids.length == 0) {
       let err = remie.create("server.400.missingRequiredParameter", {
@@ -56,7 +52,7 @@ module.exports = function(server) {
 
   seneca.add(PATTERN_BASE+'create', function (msg, cb) {
     let createdBy = msg.user.id,
-      maxNumOfIds = config.get('appIds.maxNumOfIdsInCreate'),
+      maxNumOfIds = config.appIds.maxNumOfIdsInCreate,
       numOfIds = msg.numOfIds || 1;
 
     if( ! _.isFinite(numOfIds)) {
@@ -79,11 +75,11 @@ module.exports = function(server) {
       let appIds = [],
         retries;
 
-      if (CAN_SET_RETRIES_IN_CREATE_APP_IDS) {
+      if (config.appIds.canSetRetriesInCreateAppIds) {
         retries = msg.retries;
       }
 
-      if (CAN_SET_APP_IDS_IN_CREATE_APP_IDS && msg.ids !== undefined) {
+      if (config.appIds.canSetAppIdsInCreateAppIds && msg.ids !== undefined) {
         for (let i = 0; i < numOfIds; i++) {
           let columns = {
             createdBy: createdBy,
@@ -107,7 +103,7 @@ module.exports = function(server) {
   seneca.wrap('service:maids,model:appids', function (msg, cb) {
     log.info('[%s] ACT service: maids, model: appids\nMessage:%s', msg.id, JSON.stringify(msg, undefined, 2));
 
-    if( ! msg.access_token || msg.access_token !== API_TOKEN_MAIDS) {
+    if( ! msg.access_token || msg.access_token !== config.apiTokens.maids) {
       let err = remie.create("server.400.unauthorized", {
         internalMessage: "Access token is missing or invalid."
       });

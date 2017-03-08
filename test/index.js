@@ -13,7 +13,7 @@ if(process.env.DB_PASSWORD === "INVALID-PASSWORD") {
 // Check if already running?
 
 let assert = require('assert'),
-  config = require('config'),
+  config = require('./config'),
   crave = require("crave"),
   path = require("path");
 
@@ -24,11 +24,11 @@ let applicationPath = path.resolve("./app"),
 
 let server = {
   config: config,
-  log: (new Log()).createLogger(config.get('log')),
+  log: (new Log()).createLogger(config.log),
   maids: require(require('path').resolve('./server.js'))
 };
 
-crave.setConfig(config.get('crave'));
+crave.setConfig(config.crave);
 
 describe('MAIDS', function () {
 

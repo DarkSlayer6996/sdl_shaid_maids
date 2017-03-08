@@ -6,7 +6,6 @@
  * ************************************************** */
 
 const async = require('async'),
-  config = require('config'),
   EventEmitter = require('events'),
   fs = require('fs'),
   os = require('os'),
@@ -80,7 +79,7 @@ class Server {
     EventEmitter.call(this);
 
     // Create a new logger instance.
-    this.log = (new Log()).createLogger(config.get('log'));
+    this.log = (new Log()).createLogger(this.config.log);
 
     this.npmConfig = npmConfig;
 
@@ -114,7 +113,7 @@ class Server {
       if(err) {
         self.log.error(err);
       } else {
-        self.log.info("Seneca listening with %s config.", process.env.NODE_ENV);
+        self.log.info("Seneca listening with %s config.", self.config.environment);
         self.emit('ready', self.seneca);
       }
     });
@@ -164,7 +163,7 @@ class Server {
         }
 
         let crave = require('crave');
-        crave.setConfig(config.get('crave'));
+        crave.setConfig(self.config.crave);
         // Recursively load all files of the specified type(s) that are also located in the specified folder.
         crave.directory(path.resolve("./app"), ["api"], cb, self);
       }
@@ -177,7 +176,7 @@ class Server {
    */
   initCassandra(cb) {
     let self = this;
-    if(config.has('cassandra')) {
+    if(self.config.cassandra) {
       self.log.trace('Initializing cassandra.');
       self.cql = new Cql(self);
       self.cql.init(function(err, cassandraClient) {
@@ -199,30 +198,33 @@ class Server {
   initConfig(options) {
     let self = this;
 
-    if( ! config.has('log.name')) {
-      config.log.name = config.server.name;
+    self.config = require('./config.js');
+
+    if(!self.config.log.name) {
+      self.config.log.name = self.config.server.name;
     }
 
-    if( config.has('session') && ! config.has('session.name')) {
-      config.session.name = config.server.name + ".sid";
+    if(self.config.session && !self.config.session.name) {
+      self.config.session.name = self.config.server.name + ".sid";
     }
-    
-    if( ! config.has('server.url')) {
-      config.server.url = (config.server.port === 80) ? config.server.protocol + "://" + config.server.domainName : config.server.protocol + "://" + config.server.domainName + ":" + config.server.port;
+
+    if(!self.config.server.url) {
+      self.config.server.url = self.config.server.protocol + "://" + self.config.server.domainName;
+      if(self.config.server.port != 80) self.config.server.url += ":" + self.config.server.port;
     }
 
     // Make the configuration object immutable.
-    config.get('server');
-    self.config = config;
+    //config.get('server');
+    //self.config = config;
   }
 
   initDynamoDB(cb) {
     let self = this;
 
-    if(config.has('dynamoDb')) {
+    if(self.config.dynamoDb) {
       self.log.trace('Initializing Dynamo DB.');
       let AWS = require('aws-sdk');
-      self.dynamoDb = new AWS.DynamoDB(config.get('dynamoDb.aws'));
+      self.dynamoDb = new AWS.DynamoDB(self.config.dynamoDb.aws);
     }
     cb();
   }
@@ -247,7 +249,7 @@ class Server {
     let app = express();
 
     // If the cookie is secure and proxy is enabled. We need to enable express' trust proxy for it set cookies correctly.
-    if (config.has('session') && config.get('session.cookie.secure') && config.get('session.proxy')) {
+    if (self.config.session && self.config.session.cookie.secure && self.config.session.proxy) {
       app.enable('trust proxy');
     }
 
@@ -270,7 +272,7 @@ class Server {
     riposte.addExpressPreMiddleware(app);
 
     // Allow Cross-Origin Resource Sharing.
-    if(config.has('server.allowCors') && config.get('server.allowCors')) {
+    if(self.config.server.allowCors) {
       let cors = require('cors');
       app.use(cors());
     }
@@ -284,15 +286,15 @@ class Server {
         }
 
         // If included, configure webpack.
-        if(config.has('webpack.configFilePath')) {
+        if(self.config.webpack && self.config.webpack.configFilePath) {
           let webpack = require('webpack'),
             webpackHotMiddleware = require('webpack-hot-middleware'),
             webpackMiddleware = require('webpack-dev-middleware');
 
-          let webpackConfig = require(path.resolve(config.get('webpack.configFilePath')));
+          let webpackConfig = require(path.resolve(self.config.webpack.configFilePath));
 
           let compiler = webpack(webpackConfig),
-            middleware = webpackMiddleware(compiler, config.get('webpack-dev-middleware'));
+            middleware = webpackMiddleware(compiler, self.config["webpack-dev-middleware"]);
 
           app.use(middleware);
           app.use(webpackHotMiddleware(compiler));
@@ -302,7 +304,7 @@ class Server {
           });
 
         } else {
-          app.use(express.static(path.join(__dirname, '/client/dist'), config.get('express.static')));
+          app.use(express.static(path.join(__dirname, '/client/dist'), self.config.express.static));
           app.get('/', function response(req, res) {
             res.sendFile(path.join(__dirname, 'client/dist/index.html'));
           });
@@ -325,7 +327,7 @@ class Server {
         }*/
 
         // Configure i18n with express.
-        if(config.has('i18n')) {
+        if(self.config.i18n) {
           let i18next = require('i18next'),
             i18nextMiddleware = require('i18next-express-middleware');
 
@@ -335,7 +337,7 @@ class Server {
         }
 
         // Add the image folder as a static path.
-        app.use('/img', express.static(path.join(__dirname + '/client/src/img'), config.get('express.static')));
+        app.use('/img', express.static(path.join(__dirname + '/client/src/img'), self.config.express.static));
 
         self.riposte = riposte;
         self.app = app;
@@ -347,7 +349,7 @@ class Server {
   initI18next(cb) {
     let self = this;
 
-    if(config.has('i18n')) {
+    if(self.config.i18n) {
       self.log.trace('Initializing i18next.');
 
       let i18next = require('i18next'),
@@ -359,7 +361,7 @@ class Server {
         .use(i18nextMiddleware.LanguageDetector)
         .use(i18nextFileSystemBackEnd)
         .use(i18nextSprintf)
-        .init(config.get('i18n'), function (err, i18nextTranslate) {
+        .init(self.config.i18n, function (err, i18nextTranslate) {
           self.i18nextTranslate = i18nextTranslate;
           cb(err);
         });
@@ -378,22 +380,22 @@ class Server {
 
   initSessionStore(cb) {
     let self = this;
-    if(config.has('session')) {
+    if(self.config.session) {
       self.log.trace('Initializing session store.');
 
       // Set-up express sessions
       let sessionConfig = {
-        name: config.get('session.name'),
-        secret: config.get('session.secret'),
+        name: self.config.session.name,
+        secret: self.config.session.secret,
         cookie: {
-          secure: config.get('session.cookie.secure')
+          secure: self.config.session.cookie.secure
         },
-        resave: config.get('session.resave'),
-        saveUninitialized: config.get('session.saveUninitialized')
+        resave: self.config.session.resave,
+        saveUninitialized: self.config.session.saveUninitialized
       };
 
       // Create and add a session store.
-      let sessionStore = (config.has('session.store')) ? config.get('session.store').toLowerCase() : undefined;
+      let sessionStore = self.config.session.store ? self.config.session.store.toLowerCase() : undefined;
       switch (sessionStore) {
         case "mongoose":
           let MongoStore = require('connect-mongo')(session);
@@ -406,7 +408,7 @@ class Server {
           break;
 
         case "cassandra":
-          if (!config.has('cassandra')) {
+          if (!self.config.cassandra) {
             self.log.error("Cannot use cassandra as a session store because it has not been configured in the config.");
           } else {
             let columns = [
@@ -425,7 +427,7 @@ class Server {
           }
           break;
         default:
-          if (process.env.NODE_ENV.toLowerCase() === "production") {
+          if (self.config.environment.toLowerCase() === "production") {
             self.log.warn("A session store needs to be defined.");
           }
           cb(undefined, session(sessionConfig));
@@ -435,7 +437,7 @@ class Server {
       cb();
     }
   }
-  
+
   // Load the application models and endpoints.
   loadSenecaApp (cb) {
     let self = this;
@@ -448,19 +450,19 @@ class Server {
         self.models = models;
 
         //Initialize seneca.
-        if(config.has('seneca')) {
+        if(self.config.seneca) {
           self.seneca = require('seneca')();
         }
 
         let crave = require('crave');
-        crave.setConfig(config.get('crave'));
+        crave.setConfig(self.config.crave);
         // Recursively load all files of the specified type(s) that are also located in the specified folder.
         crave.directory(path.resolve("./app"), ["seneca"], cb, self);
       }
     });
   }
-  
-  
+
+
   setResponseHandlers(cb) {
     this.log.trace('Add application error and response handlers.');
 
@@ -496,33 +498,27 @@ class Server {
 
   // Start express server and listen on configured port
   startExpressServer(cb) {
-    let self = this,
-      port = process.env.PORT || config.get('server.port'),
-      senecaConfig = JSON.parse(JSON.stringify(config.get('seneca')));
+    let self = this;
 
-    if (process.env.MAIDS_HOST) {
-      senecaConfig["host"] = process.env.MAIDS_HOST;
-    }
-
-    if( ! senecaConfig["host"]) {
+    if(!self.config.seneca.host) {
       getHostIpAddress(function (err, ipAddress) {
         if(err) {
           cb(err);
         } else {
           if(ipAddress) {
-            senecaConfig["host"] = ipAddress;
+            self.config.seneca.host = ipAddress;
           } else {
-            senecaConfig["host"] = "localhost";
+            self.config.seneca.host = "localhost";
           }
 
-          console.log("Listening with seneca config:", JSON.stringify(senecaConfig, undefined, 2));
-          self.seneca.listen(senecaConfig);
+          console.log("Listening with seneca config:", JSON.stringify(self.config.seneca, undefined, 2));
+          self.seneca.listen(self.config.seneca);
           self.seneca.ready(cb);
         }
       });
     } else {
-      console.log("Seneca config:", JSON.stringify(senecaConfig, undefined, 2));
-      self.seneca.listen(senecaConfig);
+      console.log("Seneca config:", JSON.stringify(self.config.seneca, undefined, 2));
+      self.seneca.listen(self.config.seneca);
       self.seneca.ready(cb);
     }
 
