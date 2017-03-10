@@ -21,6 +21,9 @@ let configSettings = {
         "replication": process.env.CASSANDRA_REPLICATION ? JSON.parse(process.env.CASSANDRA_REPLICATION) : {                        // Configure cassandra replication for the keyspace specified, see https://goo.gl/zFFJiv
             "class": "SimpleStrategy",          // Required. The name of the replica placement strategy class for the new keyspace.
             "replication_factor": 1             // Required if class is SimpleStrategy; otherwise, not used. The number of replicas of data on multiple nodes.
+        },
+        "queryOptions": {
+            "consistency": process.env.CASSANDRA_CONSISTENCY || "one"
         }
     },
 

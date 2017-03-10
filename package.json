@@ -62,7 +62,7 @@
     "bunyan": "1.8.4",
     "bunyan-dynamo": "0.0.5",
     "bunyan-pretty-stream": "1.0.1",
-    "cassandra-driver": "3.1.5",
+    "cassandra-driver": "3.2.0",
     "compression": "1.6.2",
     "cors": "2.8.1",
     "cramit": "0.0.3",
