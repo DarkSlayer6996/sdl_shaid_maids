@@ -1,17 +1,16 @@
 machine:
-  pre:
-    - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
   services:
     - docker
 
 dependencies:
   override:
     - docker info
-    - docker build --rm=false -f Dockerfile-Test -t smartdevicelink/shaid-maids:123456789 .
-    
+    - docker build --rm=false -t smartdevicelink/shaid-maids:$CIRCLE_TAG .
+
 test:
   override:
-     - echo "skipping tests"
+     - docker run -d --name maids smartdevicelink/shaid-maids:$CIRCLE_TAG
+     - sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" maids)" -- bash -c "cd /usr/src/app/ && npm test"
 
 deployment:
   hub:
