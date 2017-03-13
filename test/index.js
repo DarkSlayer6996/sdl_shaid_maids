@@ -13,7 +13,7 @@ if(process.env.DB_PASSWORD === "INVALID-PASSWORD") {
 // Check if already running?
 
 let assert = require('assert'),
-  config = require('./config'),
+  config = require('../config'),
   crave = require("crave"),
   path = require("path");
 
