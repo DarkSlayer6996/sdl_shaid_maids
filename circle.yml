@@ -9,10 +9,13 @@ dependencies:
 
 test:
   override:
-     - docker run -d --name maids smartdevicelink/shaid-maids:$CIRCLE_TAG
-     - sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" maids)" -- bash -c "cd /usr/src/app/ && npm test"
+    - echo skipping test
+    - echo test will be run by sdl_shaid
+    #- docker run -d --name maids smartdevicelink/shaid-maids:$CIRCLE_TAG
+    #- sudo lxc-attach -n "$(docker inspect --format "{{.Id}}" maids)" -- bash -c "cd /usr/src/app/ && npm test"
 
 deployment:
+  # deploy to docker hub and update the sdl_shaid repo when a new git release tag is made
   hub:
     tag: /[0-9]+(\.[0-9]+)*/
     owner: smartdevicelink
@@ -23,4 +26,4 @@ deployment:
       - git config --global user.name "$GIT_NAME"
       - curl -O https://raw.githubusercontent.com/livio/scripts/master/docker/compose-update.sh
       - chmod +x compose-update.sh
-      - ./compose-update.sh $CIRCLE_TAG smartdevicelink sdl_shaid smartdevicelink/shaid-maids "Bumped shaid-maids version $CIRCLE_TAG" docker-compose.yml ./scripts/deploy-to-ecs.staging.sh
+      - ./compose-update.sh $CIRCLE_TAG smartdevicelink sdl_shaid smartdevicelink/shaid-maids "Bumped shaid-maids version $CIRCLE_TAG" docker-compose.yml docker-compose-circleci.yml ./scripts/deploy-to-ecs.staging.sh
