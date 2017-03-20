@@ -196,14 +196,6 @@ module.exports = function(server) {
       cql.createTable(this.getTableName(), columns, cb);
     }
 
-    dropTable(cb) {
-      cql.dropTable(this.getTableName(), cb);
-    }
-
-    truncateTable(cb) {
-      cql.truncateTable(this.getTableName(), cb);
-    }
-
     getTableName() {
       return this.tableName;
     }

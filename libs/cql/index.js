@@ -29,16 +29,9 @@ class Cqlsh {
       self.connect(next);
     });
 
-    if(self.config.cassandra.dropKeyspaceOnInit === true) {
-      tasks.push(function (next) {
-        self.dropKeyspace(self.config.cassandra.keyspace, next);
-      });
-    }
-
     tasks.push(function(next) {
       self.createKeyspace(self.config.cassandra.keyspace, self.config.cassandra, next);
     });
-
 
     async.series(tasks, function (err, results) {
       cb(err, self.db);
@@ -121,28 +114,6 @@ class Cqlsh {
     });
   }
 
-  dropKeyspace(keyspace, cb) {
-    let self = this;
-
-    if(self.db.metadata.keyspaces[keyspace]) {
-      let cql = "DROP KEYSPACE IF EXISTS " + keyspace + ";";
-      self.log.trace('cql.dropKeyspace(): Executing query to drop keyspace "%s". "%s"', keyspace, cql);
-      self.db.execute(cql, function (err, resultSet) {
-        if(err) {
-          cb(err, resultSet);
-        } else if(self.db.metadata.keyspaces[keyspace]) {
-          cb(new Error("cql.dropKeyspace():  Keyspace '"+keyspace+"' was not removed."), resultSet);
-        } else {
-          self.log.trace('cql.dropKeyspace():  Keyspace "%s" has been removed.', keyspace);
-          cb(undefined, resultSet);
-        }
-      });
-    } else {
-      self.log.trace('cql.dropKeyspace():  Keyspace "%s" was already removed.', keyspace);
-      cb();
-    }
-  }
-
   createTable(tableName, columns, cb, keyspace) {
     let self = this;
     keyspace = (keyspace) || self.config.cassandra.keyspace;
@@ -163,43 +134,6 @@ class Cqlsh {
             cb(undefined, resultSet);
           }
         });
-      }
-    });
-  }
-
-  dropTable(tableName, cb, keyspace) {
-    let self = this;
-    keyspace = (keyspace) || self.config.cassandra.keyspace;
-
-    let cql = "DROP TABLE "+keyspace+"."+tableName+";";
-    self.db.execute(cql, function(err, resultSet) {
-      if(err) {
-        cb(err);
-      } else {
-        self.db.metadata.getTable(keyspace, tableName, function(err, table) {
-          if(err) {
-            self.log.trace('cql.dropTable():  Table "%s" could not be dropped in "%s".', tableName, keyspace);
-            cb(err);
-          } else {
-            self.log.trace('cql.dropTable():  Table "%s" was dropped in keyspace "%s".', tableName, keyspace);
-            cb(undefined, resultSet);
-          }
-        });
-      }
-    });
-  }
-
-  truncateTable(tableName, cb, keyspace) {
-    let self = this;
-    keyspace = (keyspace) || self.config.cassandra.keyspace;
-
-    let cql = "TRUNCATE "+keyspace+"."+tableName+";";
-    self.db.execute(cql, function(err, resultSet) {
-      if(err) {
-        cb(err);
-      } else {
-        self.log.trace('cql.truncateTable():  Table "%s.%s" was truncated.', keyspace, tableName);
-        cb(undefined, resultSet);
       }
     });
   }
@@ -230,88 +164,6 @@ class Cqlsh {
             cb(err);
           } else {
             self.models = models;
-            cb(undefined, models);
-          }
-        });
-      }
-    };
-
-    // At the time of initialization, the server does not have
-    // the updated cassandraClient, so we need to update it before
-    // loading the modules.
-    self.server.cassandraClient = self.db;
-
-    // Recursively load all files of the specified type(s) that are also located in the specified folder.
-    crave.directory(path.resolve("./app"), ["model"], craveCb, self.server);
-  }
-
-  dropModels(cb) {
-    let self = this,
-      crave = require('crave'),
-      models = {};
-
-    crave.setConfig(self.config.crave);
-
-    let craveCb = function(err, filesRequired, modelObjects) {
-      if(err) {
-        cb(err);
-      } else {
-        let tasks = [];
-        for(let i = 0; i < modelObjects.length; i++) {
-          if(modelObjects[i]) {
-            tasks.push(function(next) {
-              modelObjects[i].dropTable(next);
-            });
-            models[modelObjects[i].getTableName()] = modelObjects[i];
-          }
-        }
-
-        async.series(tasks, function(err, results) {
-          if(err) {
-            cb(err);
-          } else {
-            self.models = undefined;
-            cb(undefined, models);
-          }
-        });
-      }
-    };
-
-    // At the time of initialization, the server does not have
-    // the updated cassandraClient, so we need to update it before
-    // loading the modules.
-    self.server.cassandraClient = self.db;
-
-    // Recursively load all files of the specified type(s) that are also located in the specified folder.
-    crave.directory(path.resolve("./app"), ["model"], craveCb, self.server);
-  }
-
-  truncateModels(cb) {
-    let self = this,
-      crave = require('crave'),
-      models = {};
-
-    crave.setConfig(self.config.crave);
-
-    let craveCb = function(err, filesRequired, modelObjects) {
-      if(err) {
-        cb(err);
-      } else {
-        let tasks = [];
-        for(let i = 0; i < modelObjects.length; i++) {
-          if(modelObjects[i]) {
-            tasks.push(function(next) {
-              modelObjects[i].truncateTable(next);
-            });
-            models[modelObjects[i].getTableName()] = modelObjects[i];
-          }
-        }
-
-        async.series(tasks, function(err, results) {
-          if(err) {
-            cb(err);
-          } else {
-            self.models = undefined;
             cb(undefined, models);
           }
         });
